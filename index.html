@@ -771,6 +771,9 @@ function App() {
   const [mode, setMode] = useState(null);
   const [moveDlg, setMoveDlg] = useState(null);
   const [moveAmt, setMoveAmt] = useState(1);
+  const [airlift, setAirlift] = useState(null);
+  const [airTo, setAirTo] = useState(null);
+  const [airAmt, setAirAmt] = useState(1);
   const [tab, setTab] = useState("empire");
   const [electionDlg, setElectionDlg] = useState(false);
   const [view, setView] = useState({ x: 0, y: 0, k: 1 });
@@ -886,7 +889,7 @@ function App() {
       try {
         const ng = migrate(JSON.parse(rd.result));
         ng.news = "Game loaded from file.";
-        setG(ng); setSel(null); setMode(null); setElectionDlg(false); setMoveDlg(null); setPhase("play");
+        setG(ng); setSel(null); setMode(null); setElectionDlg(false); setMoveDlg(null); setAirlift(null); setAirTo(null); setPhase("play");
         const pt = XY[ng.nations[ng.player].cap];
         if (pt) setView({ x: MW / 2 - pt[0] * 3, y: MH / 2 - pt[1] * 3, k: 3 });
       } catch (err) { window.alert("That file does not look like a valid World Conquest save."); }
@@ -1017,6 +1020,35 @@ function App() {
       }
     });
     setMoveDlg(null); setMode(null);
+  }
+  function airliftCost(g, from, to, amt) {
+    // base fee plus distance- and size-scaled transport cost
+    const dist = hav(CDEF[from], CDEF[to]);
+    let c = 10 + (dist / 400) * (1 + amt / 25);
+    if (g.provs[from] && g.provs[from].air) c *= 0.6; // airport at origin discounts
+    return Math.round(c);
+  }
+  function doAirlift() {
+    const from = airlift, to = airTo;
+    if (!from || !to) return;
+    mut((d) => {
+      const A = d.provs[from], B = d.provs[to];
+      if (!A || !B) return;
+      const allyId = B.owner;
+      if (!isAllied(d, d.player, allyId)) return;
+      const amt = Math.max(0, Math.min(A.troops, Math.floor(airAmt)));
+      if (amt <= 0) return;
+      const cost = airliftCost(d, from, to, amt);
+      if (d.nations[d.player].treasury < cost) { d.news = "Not enough treasury for the airlift."; return; }
+      d.nations[d.player].treasury -= cost;
+      A.troops -= amt; B.troops = Math.min(250, B.troops + amt);
+      A.acted = true;
+      const k = pk(d.player, allyId);
+      d.rel[k] = Math.min(100, d.rel[k] + Math.min(10, 3 + Math.round(amt / 10)));
+      glog(d, `✈️ You airlift ${amt} troops to ${CDEF[to].name} ($${cost}) — ${d.nations[allyId].name} is deeply grateful.`, "major");
+      d.news = `Troops airlifted to ${d.nations[allyId].name}.`;
+    });
+    setAirlift(null); setAirTo(null); setMode(null);
   }
   function endTurn() {
     let el = false;
@@ -1211,6 +1243,9 @@ function App() {
             <button style={BTN} disabled={P.treasury < 50 || selP.air > 0} title="Travel from this city costs 40% less" onClick={() => mut((d) => { const p = d.provs[sel]; if (d.nations[d.player].treasury >= 50 && !p.air) { d.nations[d.player].treasury -= 50; p.air = 1; glog(d, `✈️ International airport opens in ${CDEF[sel].name}.`); } })}>✈️ Airport ($50)</button>
             <button style={BTN} disabled={P.treasury < fortC || selP.fort >= 5} onClick={() => mut((d) => { const p = d.provs[sel]; if (d.nations[d.player].treasury >= fortC && p.fort < 5) { d.nations[d.player].treasury -= fortC; p.fort++; } })}>🛡️ Fortify (${fortC})</button>
             <button style={mode ? BTNG : BTN} disabled={selP.acted || selP.troops < 1} onClick={() => setMode((m) => (m ? null : "target"))}>{selP.acted ? "Already acted" : mode ? "Cancel targeting" : "Move / Attack ➜"}</button>
+            {alliesOf(g, g.player).some((a) => nationProvs(g, a).length > 0) && (
+              <button style={BTN} disabled={selP.acted || selP.troops < 1} title="Send troops to any allied city, anywhere — for a transport fee" onClick={() => { setAirlift(sel); setAirTo(null); setAirAmt(Math.max(1, Math.floor(selP.troops / 2))); }}>✈️ Airlift to ally</button>
+            )}
             {!isCap && <button style={BTN2} disabled={P.treasury < 50} onClick={() => mut((d) => { d.nations[d.player].treasury -= 50; d.nations[d.player].cap = sel; glog(d, `The capital is moved to ${CDEF[sel].name}.`); })}>Make capital ($50)</button>}
           </div>
         )}
@@ -1447,6 +1482,57 @@ function App() {
               <div style={{ display: "flex", gap: 8 }}>
                 <button style={{ ...BTN, flex: 1 }} onClick={() => doMove(amt)}>Send {amt}</button>
                 <button style={BTN2} onClick={() => setMoveDlg(null)}>Cancel</button>
+              </div>
+            </div>
+          </div>
+        );
+      })()}
+
+      {airlift && (() => {
+        const from = airlift;
+        const fromP = g.provs[from];
+        if (!fromP) return null;
+        const max = fromP.troops;
+        const amt = Math.max(1, Math.min(max, airAmt));
+        // every allied city, grouped by ally nation
+        const allyIds = alliesOf(g, g.player).filter((a) => nationProvs(g, a).length > 0);
+        const targets = [];
+        allyIds.forEach((a) => nationProvs(g, a).forEach((cid) => targets.push({ cid, ally: a })));
+        targets.sort((x, y) => hav(CDEF[from], CDEF[x.cid]) - hav(CDEF[from], CDEF[y.cid]));
+        const cost = airTo ? airliftCost(g, from, airTo, amt) : 0;
+        const canAfford = P.treasury >= cost;
+        return (
+          <div style={{ position: "fixed", inset: 0, background: "rgba(5,10,18,.7)", display: "flex", alignItems: "center", justifyContent: "center", zIndex: 52 }} onClick={() => { setAirlift(null); setAirTo(null); }}>
+            <div style={{ background: "#152537", border: "1px solid #2c4a6e", borderRadius: 12, padding: 20, width: 360, maxWidth: "92%", maxHeight: "80vh", overflowY: "auto" }} onClick={(e) => e.stopPropagation()}>
+              <b>✈️ Airlift troops to an ally</b>
+              <p style={{ fontSize: 12.5, color: "#aebfd2", margin: "6px 0 10px" }}>From {CDEF[from].name} ({max}⚔). Pick any allied city — distance and troop count set the transport fee.{fromP.air ? " Airport here gives a 40% discount." : ""}</p>
+              <div style={{ fontSize: 11.5, color: "#93a9be", marginBottom: 4 }}>Destination</div>
+              <div style={{ display: "grid", gap: 4, maxHeight: 200, overflowY: "auto", marginBottom: 12 }}>
+                {targets.map(({ cid, ally }) => {
+                  const sel2 = airTo === cid;
+                  const dist = Math.round(hav(CDEF[from], CDEF[cid]));
+                  return (
+                    <button key={cid} onClick={() => setAirTo(cid)} style={{ ...BTN2, textAlign: "left", background: sel2 ? "#2e6e44" : "#1c2f44", border: sel2 ? "1px solid #44a165" : "1px solid #2c4459", display: "flex", justifyContent: "space-between", gap: 8 }}>
+                      <span><span style={{ display: "inline-block", width: 8, height: 8, borderRadius: 2, background: g.nations[ally].color, marginRight: 6 }} />{CDEF[cid].name} <span style={{ color: "#8ea7bf" }}>· {g.nations[ally].name}</span></span>
+                      <span style={{ color: "#8ea7bf" }}>{dist} km · {g.provs[cid].troops}⚔</span>
+                    </button>
+                  );
+                })}
+              </div>
+              <div style={{ fontSize: 11.5, color: "#93a9be", marginBottom: 4 }}>Troops to send</div>
+              <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 8 }}>
+                <input type="range" min="1" max={max} value={amt} onChange={(e) => setAirAmt(+e.target.value)} style={{ flex: 1 }} />
+                <input type="number" min="1" max={max} value={amt} onChange={(e) => setAirAmt(Math.max(1, Math.min(max, +e.target.value || 1)))}
+                  style={{ width: 56, background: "#0e1f33", color: "#e7eef6", border: "1px solid #2c4a6e", borderRadius: 5, padding: "4px 6px", fontSize: 12 }} />
+              </div>
+              <div style={{ display: "flex", gap: 6, marginBottom: 10 }}>
+                <button style={{ ...BTN2, flex: 1 }} onClick={() => setAirAmt(Math.max(1, Math.floor(max / 2)))}>Half</button>
+                <button style={{ ...BTN2, flex: 1 }} onClick={() => setAirAmt(max)}>All</button>
+              </div>
+              {airTo && <div style={{ fontSize: 12, color: canAfford ? "#aebfd2" : "#ff8a76", marginBottom: 10 }}>Transport fee: <b>${cost}</b>{!canAfford ? " — treasury too low" : ""}</div>}
+              <div style={{ display: "flex", gap: 8 }}>
+                <button style={{ ...BTN, flex: 1, opacity: airTo && canAfford ? 1 : 0.5 }} disabled={!airTo || !canAfford} onClick={doAirlift}>Airlift {amt}{airTo ? ` ($${cost})` : ""}</button>
+                <button style={BTN2} onClick={() => { setAirlift(null); setAirTo(null); }}>Cancel</button>
               </div>
             </div>
           </div>
