@@ -1,0 +1,1490 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
+<title>World Conquest</title>
+<link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🌍</text></svg>" />
+<style>
+  html, body, #root { margin: 0; padding: 0; height: 100%; }
+  body { background: #0a1626; }
+  * { -webkit-tap-highlight-color: transparent; }
+</style>
+<script crossorigin src="https://unpkg.com/react@18/umd/react.production.min.js"></script>
+<script crossorigin src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"></script>
+<script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
+</head>
+<body>
+<div id="root"></div>
+<script type="text/babel" data-presets="react">
+const { useState, useRef, useEffect } = React;
+
+
+// ============ NATIONS & CITIES ============
+const NATIONS = {
+  canada: { name: "Canada", color: "#b3554e", iso: "CAN", cap: "ottawa", gov: "democracy", ag: 0.2 },
+  usa: { name: "United States", color: "#4169c8", iso: "USA", cap: "washington", gov: "democracy", ag: 0.45, great: 1 },
+  mexico: { name: "Mexico", color: "#d28e3c", iso: "MEX", cap: "mexicocity", gov: "democracy", ag: 0.3 },
+  colombia: { name: "Colombia", color: "#c9c050", iso: "COL", cap: "bogota", gov: "democracy", ag: 0.3 },
+  brazil: { name: "Brazil", color: "#3e9e5d", iso: "BRA", cap: "brasilia", gov: "democracy", ag: 0.35 },
+  argentina: { name: "Argentina", color: "#82c0e6", iso: "ARG", cap: "buenosaires", gov: "democracy", ag: 0.3 },
+  chile: { name: "Chile", color: "#d95f6a", iso: "CHL", cap: "santiago", gov: "democracy", ag: 0.2 },
+  peru: { name: "Peru", color: "#d9a84a", iso: "PER", cap: "lima", gov: "democracy", ag: 0.25 },
+  uk: { name: "United Kingdom", color: "#c25575", iso: "GBR", cap: "london", gov: "democracy", ag: 0.3 },
+  france: { name: "France", color: "#5f7fd6", iso: "FRA", cap: "paris", gov: "democracy", ag: 0.3 },
+  spain: { name: "Spain", color: "#df7a3b", iso: "ESP", cap: "madrid", gov: "democracy", ag: 0.25 },
+  portugal: { name: "Portugal", color: "#4aa86f", iso: "PRT", cap: "lisbon", gov: "democracy", ag: 0.15 },
+  germany: { name: "Germany", color: "#767f8c", iso: "DEU", cap: "berlin", gov: "democracy", ag: 0.25 },
+  netherlands: { name: "Netherlands", color: "#e08a3d", iso: "NLD", cap: "amsterdam", gov: "democracy", ag: 0.15 },
+  denmark: { name: "Denmark", color: "#d34f4f", iso: "DNK", cap: "copenhagen", gov: "democracy", ag: 0.15 },
+  norway: { name: "Norway", color: "#46a0c2", iso: "NOR", cap: "oslo", gov: "democracy", ag: 0.15 },
+  sweden: { name: "Sweden", color: "#d9c84a", iso: "SWE", cap: "stockholm", gov: "democracy", ag: 0.15 },
+  finland: { name: "Finland", color: "#7fd0e8", iso: "FIN", cap: "helsinki", gov: "democracy", ag: 0.15 },
+  estonia: { name: "Estonia", color: "#6dcabe", iso: "EST", cap: "tallinn", gov: "democracy", ag: 0.1 },
+  latvia: { name: "Latvia", color: "#b86d8f", iso: "LVA", cap: "riga", gov: "democracy", ag: 0.1 },
+  lithuania: { name: "Lithuania", color: "#8fae4a", iso: "LTU", cap: "vilnius", gov: "democracy", ag: 0.1 },
+  poland: { name: "Poland", color: "#bd6fa5", iso: "POL", cap: "warsaw", gov: "democracy", ag: 0.3 },
+  czechia: { name: "Czechia", color: "#a06ad0", iso: "CZE", cap: "prague", gov: "democracy", ag: 0.2 },
+  italy: { name: "Italy", color: "#6fbf73", iso: "ITA", cap: "rome", gov: "democracy", ag: 0.25 },
+  greece: { name: "Greece", color: "#5f9fd9", iso: "GRC", cap: "athens", gov: "democracy", ag: 0.3 },
+  romania: { name: "Romania", color: "#c2c95e", iso: "ROU", cap: "bucharest", gov: "democracy", ag: 0.25 },
+  ukraine: { name: "Ukraine", color: "#49c2a5", iso: "UKR", cap: "kyiv", gov: "democracy", ag: 0.3 },
+  turkey: { name: "Turkey", color: "#b06a45", iso: "TUR", cap: "ankara", gov: "democracy", ag: 0.5 },
+  russia: { name: "Russia", color: "#8052c8", iso: "RUS", cap: "moscow", gov: "autocracy", ag: 0.85, great: 1 },
+  egypt: { name: "Egypt", color: "#cdb05a", iso: "EGY", cap: "cairo", gov: "autocracy", ag: 0.45 },
+  iran: { name: "Iran", color: "#7a9e3f", iso: "IRN", cap: "tehran", gov: "autocracy", ag: 0.55 },
+  saudi: { name: "Saudi Arabia", color: "#3fae62", iso: "SAU", cap: "riyadh", gov: "autocracy", ag: 0.4 },
+  morocco: { name: "Morocco", color: "#ba8a3f", iso: "MAR", cap: "rabat", gov: "democracy", ag: 0.3 },
+  algeria: { name: "Algeria", color: "#4f7a52", iso: "DZA", cap: "algiers", gov: "autocracy", ag: 0.35 },
+  nigeria: { name: "Nigeria", color: "#3f8f46", iso: "NGA", cap: "abuja", gov: "democracy", ag: 0.4 },
+  ethiopia: { name: "Ethiopia", color: "#5db0a0", iso: "ETH", cap: "addisababa", gov: "democracy", ag: 0.35 },
+  kenya: { name: "Kenya", color: "#b8564f", iso: "KEN", cap: "nairobi", gov: "democracy", ag: 0.3 },
+  southafrica: { name: "South Africa", color: "#c2774f", iso: "ZAF", cap: "pretoria", gov: "democracy", ag: 0.25 },
+  india: { name: "India", color: "#e09a3e", iso: "IND", cap: "delhi", gov: "democracy", ag: 0.45 },
+  pakistan: { name: "Pakistan", color: "#3f9e8f", iso: "PAK", cap: "islamabad", gov: "democracy", ag: 0.5 },
+  china: { name: "China", color: "#c64545", iso: "CHN", cap: "beijing", gov: "autocracy", ag: 0.6, great: 1 },
+  southkorea: { name: "South Korea", color: "#6aa9e8", iso: "KOR", cap: "seoul", gov: "democracy", ag: 0.3 },
+  japan: { name: "Japan", color: "#9aa7e8", iso: "JPN", cap: "tokyo", gov: "democracy", ag: 0.3 },
+  thailand: { name: "Thailand", color: "#4a90c2", iso: "THA", cap: "bangkok", gov: "democracy", ag: 0.25 },
+  vietnam: { name: "Vietnam", color: "#c95aa0", iso: "VNM", cap: "hanoi", gov: "autocracy", ag: 0.3 },
+  indonesia: { name: "Indonesia", color: "#c97a4a", iso: "IDN", cap: "jakarta", gov: "democracy", ag: 0.3 },
+  australia: { name: "Australia", color: "#d9a44a", iso: "AUS", cap: "canberra", gov: "democracy", ag: 0.2 },
+  newzealand: { name: "New Zealand", color: "#6a6ad9", iso: "NZL", cap: "wellington", gov: "democracy", ag: 0.1 },
+};
+const CITIES = [
+  ["vancouver","Vancouver",49.3,-123.1,"canada"],["calgary","Calgary",51,-114.1,"canada"],["edmonton","Edmonton",53.5,-113.5,"canada"],["winnipeg","Winnipeg",49.9,-97.1,"canada"],["toronto","Toronto",43.7,-79.4,"canada"],["ottawa","Ottawa",45.4,-75.7,"canada"],["montreal","Montreal",45.5,-73.6,"canada"],["halifax","Halifax",44.6,-63.6,"canada"],
+  ["seattle","Seattle",47.6,-122.3,"usa"],["sanfrancisco","San Francisco",37.8,-122.4,"usa"],["losangeles","Los Angeles",34.1,-118.2,"usa"],["phoenix","Phoenix",33.4,-112.1,"usa"],["denver","Denver",39.7,-105,"usa"],["minneapolis","Minneapolis",45,-93.3,"usa"],["dallas","Dallas",32.8,-96.8,"usa"],["houston","Houston",29.8,-95.4,"usa"],["chicago","Chicago",41.9,-87.6,"usa"],["atlanta","Atlanta",33.7,-84.4,"usa"],["miami","Miami",25.8,-80.2,"usa"],["washington","Washington D.C.",38.9,-77,"usa"],["newyork","New York",40.7,-74,"usa"],["boston","Boston",42.4,-71.1,"usa"],
+  ["tijuana","Tijuana",32.5,-117,"mexico"],["chihuahua","Chihuahua",28.6,-106.1,"mexico"],["monterrey","Monterrey",25.7,-100.3,"mexico"],["guadalajara","Guadalajara",20.7,-103.3,"mexico"],["mexicocity","Mexico City",19.4,-99.1,"mexico"],["cancun","Cancun",21.2,-86.8,"mexico"],
+  ["havana","Havana",23.1,-82.4,"neutral","CUB"],
+  ["barranquilla","Barranquilla",11,-74.8,"colombia"],["medellin","Medellin",6.2,-75.6,"colombia"],["bogota","Bogota",4.7,-74.1,"colombia"],["cali","Cali",3.4,-76.5,"colombia"],
+  ["caracas","Caracas",10.5,-66.9,"neutral","VEN"],["quito","Quito",-0.2,-78.5,"neutral","ECU"],["lapaz","La Paz",-16.5,-68.1,"neutral","BOL"],["montevideo","Montevideo",-34.9,-56.2,"neutral","URY"],["asuncion","Asuncion",-25.3,-57.6,"neutral","PRY"],
+  ["lima","Lima",-12,-77,"peru"],["arequipa","Arequipa",-16.4,-71.5,"peru"],
+  ["santiago","Santiago",-33.4,-70.7,"chile"],["antofagasta","Antofagasta",-23.7,-70.4,"chile"],
+  ["manaus","Manaus",-3.1,-60,"brazil"],["fortaleza","Fortaleza",-3.7,-38.5,"brazil"],["recife","Recife",-8,-34.9,"brazil"],["salvador","Salvador",-12.9,-38.5,"brazil"],["brasilia","Brasilia",-15.8,-47.9,"brazil"],["belohorizonte","Belo Horizonte",-19.9,-43.9,"brazil"],["rio","Rio de Janeiro",-22.9,-43.2,"brazil"],["saopaulo","Sao Paulo",-23.5,-46.6,"brazil"],["portoalegre","Porto Alegre",-30,-51.2,"brazil"],
+  ["cordoba","Cordoba",-31.4,-64.2,"argentina"],["buenosaires","Buenos Aires",-34.6,-58.4,"argentina"],["mendoza","Mendoza",-32.9,-68.8,"argentina"],
+  ["nuuk","Nuuk",64.2,-51.7,"neutral","GRL"],["reykjavik","Reykjavik",64.1,-21.9,"neutral","ISL"],["dublin","Dublin",53.3,-6.3,"neutral","IRL"],
+  ["belfast","Belfast",54.6,-5.9,"uk"],["edinburgh","Edinburgh",55.95,-3.2,"uk"],["manchester","Manchester",53.5,-2.2,"uk"],["birmingham","Birmingham",52.5,-1.9,"uk"],["london","London",51.5,-0.1,"uk"],
+  ["paris","Paris",48.9,2.4,"france"],["nantes","Nantes",47.2,-1.6,"france"],["lyon","Lyon",45.8,4.8,"france"],["marseille","Marseille",43.3,5.4,"france"],["bordeaux","Bordeaux",44.8,-0.6,"france"],["toulouse","Toulouse",43.6,1.4,"france"],
+  ["lisbon","Lisbon",38.7,-9.1,"portugal"],["porto","Porto",41.1,-8.6,"portugal"],
+  ["madrid","Madrid",40.4,-3.7,"spain"],["bilbao","Bilbao",43.3,-2.9,"spain"],["barcelona","Barcelona",41.4,2.2,"spain"],["seville","Seville",37.4,-6,"spain"],["valencia","Valencia",39.5,-0.4,"spain"],
+  ["amsterdam","Amsterdam",52.4,4.9,"netherlands"],["rotterdam","Rotterdam",51.9,4.5,"netherlands"],
+  ["brussels","Brussels",50.8,4.4,"neutral","BEL"],["zurich","Zurich",47.4,8.5,"neutral","CHE"],["vienna","Vienna",48.2,16.4,"neutral","AUT"],["budapest","Budapest",47.5,19,"neutral","HUN"],["zagreb","Zagreb",45.8,16,"neutral","HRV"],
+  ["prague","Prague",50.1,14.4,"czechia"],["brno","Brno",49.2,16.6,"czechia"],
+  ["hamburg","Hamburg",53.6,10,"germany"],["berlin","Berlin",52.5,13.4,"germany"],["leipzig","Leipzig",51.3,12.4,"germany"],["cologne","Cologne",50.9,7,"germany"],["frankfurt","Frankfurt",50.1,8.7,"germany"],["munich","Munich",48.1,11.6,"germany"],
+  ["aalborg","Aalborg",57,9.9,"denmark"],["aarhus","Aarhus",56.2,10.2,"denmark"],["odense","Odense",55.4,10.4,"denmark"],["copenhagen","Copenhagen",55.7,12.6,"denmark"],
+  ["bergen","Bergen",60.4,5.3,"norway"],["oslo","Oslo",59.9,10.8,"norway"],["trondheim","Trondheim",63.4,10.4,"norway"],
+  ["gothenburg","Gothenburg",57.7,12,"sweden"],["malmo","Malmo",55.6,13,"sweden"],["stockholm","Stockholm",59.3,18.1,"sweden"],["umea","Umea",63.8,20.3,"sweden"],
+  ["helsinki","Helsinki",60.2,24.9,"finland"],["oulu","Oulu",65,25.5,"finland"],
+  ["tallinn","Tallinn",59.4,24.8,"estonia"],["tartu","Tartu",58.4,26.7,"estonia"],
+  ["riga","Riga",56.9,24.1,"latvia"],["liepaja","Liepaja",56.5,21,"latvia"],
+  ["vilnius","Vilnius",54.7,25.3,"lithuania"],["kaunas","Kaunas",54.9,23.9,"lithuania"],
+  ["gdansk","Gdansk",54.4,18.6,"poland"],["poznan","Poznan",52.4,16.9,"poland"],["warsaw","Warsaw",52.2,21,"poland"],["krakow","Krakow",50.1,19.9,"poland"],["wroclaw","Wroclaw",51.1,17,"poland"],
+  ["milan","Milan",45.5,9.2,"italy"],["rome","Rome",41.9,12.5,"italy"],["naples","Naples",40.9,14.3,"italy"],["palermo","Palermo",38.1,13.4,"italy"],["cagliari","Cagliari",39.2,9.1,"italy"],
+  ["athens","Athens",38,23.7,"greece"],["thessaloniki","Thessaloniki",40.6,23,"greece"],
+  ["belgrade","Belgrade",44.8,20.5,"neutral","SRB"],["sofia","Sofia",42.7,23.3,"neutral","BGR"],["minsk","Minsk",53.9,27.6,"neutral","BLR"],
+  ["bucharest","Bucharest",44.4,26.1,"romania"],["cluj","Cluj-Napoca",46.8,23.6,"romania"],
+  ["lviv","Lviv",49.8,24,"ukraine"],["kyiv","Kyiv",50.5,30.5,"ukraine"],["odesa","Odesa",46.5,30.7,"ukraine"],["dnipro","Dnipro",48.5,35,"ukraine"],["kharkiv","Kharkiv",50,36.2,"ukraine"],
+  ["izmir","Izmir",38.4,27.1,"turkey"],["istanbul","Istanbul",41,29,"turkey"],["antalya","Antalya",36.9,30.7,"turkey"],["ankara","Ankara",39.9,32.9,"turkey"],["gaziantep","Gaziantep",37.1,37.4,"turkey"],
+  ["stpetersburg","St. Petersburg",59.9,30.3,"russia"],["murmansk","Murmansk",69,33.1,"russia"],["moscow","Moscow",55.8,37.6,"russia"],["rostov","Rostov-on-Don",47.2,39.7,"russia"],["volgograd","Volgograd",48.7,44.5,"russia"],["kazan","Kazan",55.8,49.1,"russia"],["yekaterinburg","Yekaterinburg",56.8,60.6,"russia"],["omsk","Omsk",55,73.4,"russia"],["novosibirsk","Novosibirsk",55,82.9,"russia"],["krasnoyarsk","Krasnoyarsk",56,92.9,"russia"],["irkutsk","Irkutsk",52.3,104.3,"russia"],["yakutsk","Yakutsk",62,129.7,"russia"],["khabarovsk","Khabarovsk",48.5,135.1,"russia"],["vladivostok","Vladivostok",43.1,131.9,"russia"],
+  ["tbilisi","Tbilisi",41.7,44.8,"neutral","GEO"],["baku","Baku",40.4,49.9,"neutral","AZE"],["ashgabat","Ashgabat",37.9,58.4,"neutral","TKM"],
+  ["alexandria","Alexandria",31.2,29.9,"egypt"],["cairo","Cairo",30,31.2,"egypt"],["luxor","Luxor",25.7,32.6,"egypt"],["aswan","Aswan",24.1,32.9,"egypt"],
+  ["amman","Amman",31.9,35.9,"neutral","JOR"],["damascus","Damascus",33.5,36.3,"neutral","SYR"],["baghdad","Baghdad",33.3,44.4,"neutral","IRQ"],["dubai","Dubai",25.2,55.3,"neutral","ARE"],
+  ["riyadh","Riyadh",24.7,46.7,"saudi"],["jeddah","Jeddah",21.5,39.2,"saudi"],
+  ["tehran","Tehran",35.7,51.4,"iran"],["isfahan","Isfahan",32.7,51.7,"iran"],["mashhad","Mashhad",36.3,59.6,"iran"],
+  ["rabat","Rabat",34,-6.8,"morocco"],["casablanca","Casablanca",33.6,-7.6,"morocco"],
+  ["algiers","Algiers",36.8,3.1,"algeria"],["oran","Oran",35.7,-0.6,"algeria"],
+  ["tunis","Tunis",36.8,10.2,"neutral","TUN"],["tripoli","Tripoli",32.9,13.2,"neutral","LBY"],["khartoum","Khartoum",15.6,32.5,"neutral","SDN"],
+  ["addisababa","Addis Ababa",9,38.7,"ethiopia"],["diredawa","Dire Dawa",9.6,41.9,"ethiopia"],
+  ["nairobi","Nairobi",-1.3,36.8,"kenya"],["mombasa","Mombasa",-4,39.7,"kenya"],
+  ["daressalaam","Dar es Salaam",-6.8,39.3,"neutral","TZA"],["maputo","Maputo",-25.9,32.6,"neutral","MOZ"],["harare","Harare",-17.8,31,"neutral","ZWE"],
+  ["kinshasa","Kinshasa",-4.3,15.3,"neutral","COD"],["lusaka","Lusaka",-15.4,28.3,"neutral","ZMB"],["luanda","Luanda",-8.8,13.2,"neutral","AGO"],
+  ["accra","Accra",5.6,-0.2,"neutral","GHA"],["abidjan","Abidjan",5.3,-4,"neutral","CIV"],["bamako","Bamako",12.6,-8,"neutral","MLI"],["dakar","Dakar",14.7,-17.5,"neutral","SEN"],["douala","Douala",4,9.7,"neutral","CMR"],
+  ["lagos","Lagos",6.5,3.4,"nigeria"],["abuja","Abuja",9.1,7.4,"nigeria"],["kano","Kano",12,8.5,"nigeria"],["portharcourt","Port Harcourt",4.8,7,"nigeria"],
+  ["capetown","Cape Town",-33.9,18.4,"southafrica"],["bloemfontein","Bloemfontein",-29.1,26.2,"southafrica"],["pretoria","Pretoria",-25.7,28.2,"southafrica"],["durban","Durban",-29.9,31,"southafrica"],
+  ["almaty","Almaty",43.2,76.9,"neutral","KAZ"],["astana","Astana",51.2,71.4,"neutral","KAZ"],["tashkent","Tashkent",41.3,69.2,"neutral","UZB"],["ulaanbaatar","Ulaanbaatar",47.9,106.9,"neutral","MNG"],["kabul","Kabul",34.5,69.2,"neutral","AFG"],
+  ["karachi","Karachi",24.9,67,"pakistan"],["lahore","Lahore",31.5,74.3,"pakistan"],["islamabad","Islamabad",33.7,73.1,"pakistan"],
+  ["mumbai","Mumbai",19.1,72.9,"india"],["ahmedabad","Ahmedabad",23,72.6,"india"],["delhi","New Delhi",28.6,77.2,"india"],["kolkata","Kolkata",22.6,88.4,"india"],["chennai","Chennai",13.1,80.3,"india"],["bangalore","Bangalore",13,77.6,"india"],["hyderabad","Hyderabad",17.4,78.5,"india"],
+  ["kathmandu","Kathmandu",27.7,85.3,"neutral","NPL"],["colombo","Colombo",6.9,79.9,"neutral","LKA"],["dhaka","Dhaka",23.8,90.4,"neutral","BGD"],["yangon","Yangon",16.8,96.2,"neutral","MMR"],
+  ["bangkok","Bangkok",13.8,100.5,"thailand"],["chiangmai","Chiang Mai",18.8,99,"thailand"],
+  ["phnompenh","Phnom Penh",11.6,104.9,"neutral","KHM"],
+  ["hanoi","Hanoi",21,105.8,"vietnam"],["danang","Da Nang",16.1,108.2,"vietnam"],["hochiminh","Ho Chi Minh City",10.8,106.7,"vietnam"],
+  ["kualalumpur","Kuala Lumpur",3.1,101.7,"neutral","MYS"],
+  ["jakarta","Jakarta",-6.2,106.8,"indonesia"],["surabaya","Surabaya",-7.2,112.8,"indonesia"],["medan","Medan",3.6,98.7,"indonesia"],
+  ["manila","Manila",14.6,121,"neutral","PHL"],["taipei","Taipei",25,121.6,"neutral","TWN"],["portmoresby","Port Moresby",-9.4,147.2,"neutral","PNG"],
+  ["urumqi","Urumqi",43.8,87.6,"china"],["lhasa","Lhasa",29.7,91.1,"china"],["lanzhou","Lanzhou",36.1,103.8,"china"],["chengdu","Chengdu",30.7,104.1,"china"],["chongqing","Chongqing",29.6,106.6,"china"],["kunming","Kunming",25,102.7,"china"],["xian","Xian",34.3,108.9,"china"],["beijing","Beijing",39.9,116.4,"china"],["wuhan","Wuhan",30.6,114.3,"china"],["shanghai","Shanghai",31.2,121.5,"china"],["guangzhou","Guangzhou",23.1,113.3,"china"],["shenyang","Shenyang",41.8,123.4,"china"],["harbin","Harbin",45.8,126.5,"china"],
+  ["pyongyang","Pyongyang",39,125.8,"neutral","PRK"],
+  ["seoul","Seoul",37.6,127,"southkorea"],["busan","Busan",35.2,129.1,"southkorea"],
+  ["sapporo","Sapporo",43.1,141.4,"japan"],["sendai","Sendai",38.3,140.9,"japan"],["tokyo","Tokyo",35.7,139.7,"japan"],["nagoya","Nagoya",35.2,136.9,"japan"],["osaka","Osaka",34.7,135.5,"japan"],["fukuoka","Fukuoka",33.6,130.4,"japan"],
+  ["darwin","Darwin",-12.5,130.8,"australia"],["perth","Perth",-31.9,115.9,"australia"],["adelaide","Adelaide",-34.9,138.6,"australia"],["melbourne","Melbourne",-37.8,145,"australia"],["hobart","Hobart",-42.9,147.3,"australia"],["canberra","Canberra",-35.3,149.1,"australia"],["sydney","Sydney",-33.9,151.2,"australia"],["brisbane","Brisbane",-27.5,153,"australia"],
+  ["auckland","Auckland",-36.8,174.8,"newzealand"],["wellington","Wellington",-41.3,174.8,"newzealand"],["christchurch","Christchurch",-43.5,172.6,"newzealand"],
+];
+const EXTRA_LINKS = [["jakarta","darwin"],["lima","santiago"],["nuuk","halifax"],["nuuk","montreal"]];
+const REL_PRESET = [["usa","uk",50],["usa","canada",60],["uk","france",40],["france","germany",45],["germany","denmark",40],["denmark","norway",60],["denmark","sweden",60],["norway","sweden",60],["sweden","finland",55],["denmark","finland",45],["russia","ukraine",-70],["usa","russia",-55],["usa","china",-40],["china","russia",30],["india","china",-30],["japan","usa",45],["china","japan",-35],["poland","russia",-50],["ukraine","poland",35],["brazil","argentina",25],["usa","mexico",20],["uk","germany",35],["spain","france",30],["italy","france",30],["australia","uk",45],["canada","uk",45],["poland","germany",30],["turkey","russia",-20],["egypt","turkey",10],["denmark","germany",40],["southkorea","usa",50],["southkorea","japan",15],["finland","russia",-35],["southkorea","china",-15]];
+const ALLY_PRESET = [["usa","uk"],["usa","canada"],["denmark","norway"],["denmark","sweden"],["norway","sweden"],["france","germany"],["china","russia"],["usa","southkorea"]];
+const RIVALS = ["Henrik Voss", "Clara Lindqvist", "Marcus Beaumont", "Sofia Reyes", "Viktor Stein", "Amara Okafor", "Jonas Therkildsen", "Elena Marchetti"];
+const ELECTION_CYCLE = 20;
+
+// ============ PROJECTION & ADJACENCY ============
+const MW = 960, MH = 520, MSC = 152.8, MTX = 480, MTY = 290;
+function project(lat, lon) {
+  const lam = (lon * Math.PI) / 180;
+  const phi = (lat * Math.PI) / 180;
+  return [MSC * lam + MTX, MTY - MSC * Math.log(Math.tan(Math.PI / 4 + phi / 2))];
+}
+const CDEF = {}, XY = {};
+CITIES.forEach((c) => {
+  CDEF[c[0]] = { id: c[0], name: c[1], lat: c[2], lon: c[3], owner0: c[4], iso: c[5] || (NATIONS[c[4]] ? NATIONS[c[4]].iso : null) };
+  XY[c[0]] = project(c[2], c[3]);
+});
+function hav(a, b) {
+  const R = 6371, d = Math.PI / 180;
+  const dla = (b.lat - a.lat) * d, dlo = (b.lon - a.lon) * d;
+  const s1 = Math.sin(dla / 2), s2 = Math.sin(dlo / 2);
+  return 2 * R * Math.asin(Math.sqrt(s1 * s1 + Math.cos(a.lat * d) * Math.cos(b.lat * d) * s2 * s2));
+}
+const ADJ = {};
+(() => {
+  const ids = Object.keys(CDEF);
+  ids.forEach((i) => { ADJ[i] = []; });
+  ids.forEach((i) => {
+    const ds = [];
+    ids.forEach((j) => { if (j !== i) { const dd = hav(CDEF[i], CDEF[j]); if (dd < 2400) ds.push({ j, d: dd }); } });
+    ds.sort((a, b) => a.d - b.d);
+    ds.slice(0, 5).forEach((x) => {
+      if (ADJ[i].indexOf(x.j) < 0) ADJ[i].push(x.j);
+      if (ADJ[x.j].indexOf(i) < 0) ADJ[x.j].push(i);
+    });
+  });
+  EXTRA_LINKS.forEach(([a, b]) => {
+    if (ADJ[a].indexOf(b) < 0) ADJ[a].push(b);
+    if (ADJ[b].indexOf(a) < 0) ADJ[b].push(a);
+  });
+})();
+const pk = (a, b) => [a, b].sort().join("|");
+const rnd = Math.random;
+const pickOne = (arr) => arr[Math.floor(rnd() * arr.length)];
+
+// ============ GAME STATE ============
+function freshGame(playerId, capitalId) {
+  const provs = {};
+  Object.keys(CDEF).forEach((id) => {
+    const c = CDEF[id], o = c.owner0;
+    const isCap = o !== "neutral" && (o === playerId ? id === capitalId : NATIONS[o].cap === id);
+    provs[id] = { id, owner: o, iso: c.iso, pop: o === "neutral" ? 3 : isCap ? 8 : 3 + ((id.charCodeAt(0) + id.length) % 4), dev: o === "neutral" ? 2 : isCap ? 5 : 3, fort: 0, uni: 0, bar: 0, air: 0, troops: o === "neutral" ? 18 : isCap ? 30 : 15, acted: false };
+  });
+  const nations = {};
+  Object.keys(NATIONS).forEach((id) => {
+    const n = NATIONS[id];
+    nations[id] = { id, name: n.name, color: n.color, iso: n.iso, gov: n.gov, ag: n.ag, great: n.great, cap: id === playerId ? capitalId : n.cap, treasury: id === playerId ? 140 : 120, tax: 25, services: 1, intel: 0, approval: 55, eliminated: false, warWeary: 0 };
+  });
+  const rel = {};
+  Object.keys(NATIONS).forEach((a) => Object.keys(NATIONS).forEach((b) => { if (a < b) rel[pk(a, b)] = 0; }));
+  Object.keys(provs).forEach((id) => {
+    const o = provs[id].owner;
+    if (o === "neutral") return;
+    ADJ[id].forEach((j) => { const oo = provs[j].owner; if (oo !== "neutral" && oo !== o) rel[pk(o, oo)] = Math.min(rel[pk(o, oo)], -8); });
+  });
+  REL_PRESET.forEach(([a, b, v]) => { rel[pk(a, b)] = v; });
+  const allies = {};
+  ALLY_PRESET.forEach(([a, b]) => { allies[pk(a, b)] = true; });
+  return { player: playerId, turn: 1, provs, nations, rel, allies, wars: {}, offers: [], event: null, duel: null, role: "leader", popularity: 50, roleTurns: 0, rival: null, leaderAt: capitalId, traveled: false, wounded: 0, securityBoost: 0, forewarned: false, log: [{ t: 1, msg: "The year begins. The world watches.", k: "info" }], news: `You now lead ${NATIONS[playerId].name}. Capital: ${CDEF[capitalId].name}.`, over: null, victoryShown: false };
+}
+
+const nationProvs = (g, nid) => Object.keys(g.provs).filter((i) => g.provs[i].owner === nid);
+const armyOf = (g, nid) => nationProvs(g, nid).reduce((s, i) => s + g.provs[i].troops, 0);
+const ecoBase = (g, nid) => nationProvs(g, nid).reduce((s, i) => s + g.provs[i].pop * g.provs[i].dev, 0);
+const incomeOf = (g, nid) => Math.round(ecoBase(g, nid) * g.nations[nid].tax * 0.02);
+const upkeepOf = (g, nid) => Math.round(armyOf(g, nid) * 0.15);
+const servCost = (g, nid) => Math.round(g.nations[nid].services * nationProvs(g, nid).length * 2.5);
+const intelCost = (g, nid) => (g.nations[nid].intel || 0) * 6;
+const netOf = (g, nid) => incomeOf(g, nid) - upkeepOf(g, nid) - servCost(g, nid) - intelCost(g, nid);
+const atWar = (g, a, b) => g.wars[pk(a, b)] !== undefined;
+const isAllied = (g, a, b) => !!g.allies[pk(a, b)];
+const alliesOf = (g, nid) => Object.keys(g.nations).filter((o) => o !== nid && isAllied(g, nid, o) && !g.nations[o].eliminated);
+const warsOf = (g, nid) => Object.keys(g.nations).filter((o) => o !== nid && atWar(g, nid, o) && !g.nations[o].eliminated);
+const bordersOf = (g, nid) => { const s = new Set(); nationProvs(g, nid).forEach((i) => ADJ[i].forEach((j) => { const o = g.provs[j].owner; if (o !== nid) s.add(o); })); return [...s]; };
+const glog = (g, msg, k = "info") => { g.log.unshift({ t: g.turn, msg, k }); if (g.log.length > 90) g.log.pop(); };
+
+function joinWar(g, atk, def) {
+  if (g.allies[pk(atk, def)]) delete g.allies[pk(atk, def)];
+  g.wars[pk(atk, def)] = 0; g.rel[pk(atk, def)] = -85;
+  alliesOf(g, def).forEach((al) => { if (al !== atk && !atWar(g, al, atk)) { g.wars[pk(al, atk)] = 0; g.rel[pk(al, atk)] = -70; glog(g, `${g.nations[al].name} joins the war to defend ${g.nations[def].name}!`, "war"); } });
+}
+const endWarBetween = (g, a, b) => { delete g.wars[pk(a, b)]; g.rel[pk(a, b)] = -25; };
+function reassignCapital(g, nid) {
+  const ps = nationProvs(g, nid);
+  if (!ps.length) return;
+  ps.sort((a, b) => g.provs[b].pop * g.provs[b].dev - g.provs[a].pop * g.provs[a].dev);
+  g.nations[nid].cap = ps[0];
+  glog(g, `${g.nations[nid].name} moves its capital to ${CDEF[ps[0]].name}.`);
+}
+function checkElim(g, nid) {
+  if (nid === "neutral" || !g.nations[nid] || g.nations[nid].eliminated) return;
+  if (nationProvs(g, nid).length === 0) {
+    g.nations[nid].eliminated = true;
+    Object.keys(g.wars).forEach((k) => { if (k.split("|").includes(nid)) delete g.wars[k]; });
+    Object.keys(g.allies).forEach((k) => { if (k.split("|").includes(nid)) delete g.allies[k]; });
+    g.offers = g.offers.filter((o) => o.from !== nid);
+    glog(g, `💀 ${g.nations[nid].name} has been wiped off the map!`, "major");
+    g.news = `${g.nations[nid].name} has fallen.`;
+  }
+}
+function battle(g, fId, tId) {
+  const A = g.provs[fId], D = g.provs[tId];
+  const atkN = A.owner, defN = D.owner;
+  const isCap = defN !== "neutral" && g.nations[defN].cap === tId;
+  const ap = A.troops * (0.95 + rnd() * 0.35);
+  const dp = (D.troops * 1.25 + D.dev * 2 + (isCap ? 15 : 0)) * (1 + 0.15 * D.fort) * (0.95 + rnd() * 0.35);
+  A.acted = true;
+  const an = atkN === "neutral" ? "Rebels" : g.nations[atkN].name;
+  if (ap > dp) {
+    const cas = Math.min(A.troops - 1, Math.round(A.troops * Math.min(0.55, dp / (ap * 2 + 1))));
+    const surv = A.troops - cas, adv = Math.max(1, Math.round(surv * 0.6));
+    A.troops = surv - adv;
+    D.owner = atkN; D.troops = adv; D.acted = true; D.fort = Math.max(0, D.fort - 1); D.pop = +(D.pop * 0.96).toFixed(2);
+    if (defN === "neutral") glog(g, `${an} seizes ${CDEF[tId].name}.`, "war");
+    else {
+      glog(g, `⚔️ ${an} captures ${CDEF[tId].name} from ${g.nations[defN].name}!${isCap ? " The capital has fallen!" : ""}`, "major");
+      if (isCap) { g.nations[defN].approval = Math.max(0, g.nations[defN].approval - 15); reassignCapital(g, defN); }
+      checkElim(g, defN);
+    }
+    return { win: true };
+  }
+  A.troops = Math.max(0, Math.round(A.troops * 0.45));
+  D.troops = Math.max(1, Math.round(D.troops * 0.78));
+  glog(g, `🛡️ ${an}'s assault on ${CDEF[tId].name} is repelled.`, "war");
+  return { win: false };
+}
+
+// ============ THREAT & TRAVEL ============
+function threatAt(g, cid) {
+  const P = g.nations[g.player];
+  const own = g.provs[cid].owner;
+  let t = 0;
+  if (own === g.player) {
+    t = warsOf(g, g.player).length ? 1 : 0.2;
+    if (P.approval < 30) t += 1;
+  } else if (own === "neutral") t = 2.5;
+  else {
+    const r = g.rel[pk(g.player, own)];
+    t = r > 40 ? 0.5 : r > 10 ? 1.5 : r > -10 ? 2.5 : r > -40 ? 4 : 5.5;
+    if (g.nations[own].gov === "autocracy") t += 0.8;
+  }
+  t -= (P.intel || 0) * 0.6;
+  if (g.securityBoost > 0) t -= 1;
+  return Math.max(0, t);
+}
+const threatLabel = (t) => (t < 1 ? ["Low", "#7fd49a"] : t < 2.5 ? ["Medium", "#d9c84a"] : t < 4 ? ["High", "#e09a3e"] : ["Extreme", "#ff8a76"]);
+const travelCost = (g, dest) => {
+  let c = 8 + hav(CDEF[g.leaderAt], CDEF[dest]) / 250;
+  if (g.provs[g.leaderAt] && g.provs[g.leaderAt].air) c *= 0.6;
+  return Math.round(c);
+};
+
+// ============ DEBATES / INTERVIEW QUESTIONS ============
+const DEBATES = [
+  { q: "Unemployment is rising fast. What is your plan?", a: ["Cut taxes and let business create the jobs", "Launch a massive public works program"] },
+  { q: "Immigration dominates the campaign. Where do you stand?", a: ["Open the doors — our economy needs workers", "Tighten the borders and control the inflow"] },
+  { q: "Energy prices are soaring. How will you respond?", a: ["Subsidize household energy bills immediately", "Invest in long-term energy independence"] },
+  { q: "Hospital waiting lists keep growing. What is the cure?", a: ["Let private clinics take the pressure off", "Pour public funding into the health system"] },
+  { q: "Crime is up in the big cities. What will you do?", a: ["Put more police on the streets, tonight", "Invest in prevention and youth programs"] },
+  { q: "Farmers are blocking the highways in protest. Your move?", a: ["Stand firm — the new regulations stay", "Roll the regulations back and apologize"] },
+  { q: "Should the nation spend more on the military or on schools?", a: ["Security first — fund the military", "The future first — fund the schools"] },
+];
+
+// ============ EVENTS ============
+function genEvents(g) {
+  const pid = g.player, P = g.nations[pid];
+  const others = Object.keys(g.nations).filter((o) => o !== pid && !g.nations[o].eliminated);
+  const il = P.intel || 0;
+  if (il > 0 && others.length && rnd() < il * 0.18) {
+    const fuzz = (n) => Math.max(1, Math.round(n * (1 + (rnd() - 0.5) * Math.max(0.06, 0.7 - il * 0.15))));
+    const kinds = [];
+    kinds.push(() => {
+      const o = pickOne(others);
+      glog(g, `🕵️ Intel: ${g.nations[o].name} fields approximately ${fuzz(armyOf(g, o))} troops. Treasury estimated around $${fuzz(Math.max(10, g.nations[o].treasury))}.`, "intel");
+    });
+    const plots = [];
+    others.forEach((a) => others.forEach((b) => {
+      if (a !== b && g.rel[pk(a, b)] < -30 && armyOf(g, a) > armyOf(g, b) * 1.25 && !atWar(g, a, b)) plots.push([a, b]);
+    }));
+    if (plots.length) kinds.push(() => {
+      const p2 = pickOne(plots);
+      glog(g, `🕵️ Intel: ${g.nations[p2[0]].name} appears to be preparing military action against ${g.nations[p2[1]].name}.`, "intel");
+    });
+    const hostiles = others.filter((o) => g.rel[pk(pid, o)] < 0);
+    if (hostiles.length) kinds.push(() => {
+      const o = pickOne(hostiles);
+      const cs = nationProvs(g, o).sort((a, b) => g.provs[a].troops - g.provs[b].troops);
+      if (cs.length) glog(g, `🕵️ Intel: ${CDEF[cs[0]].name} (${g.nations[o].name}) is defended by only ${fuzz(g.provs[cs[0]].troops)} troops.`, "intel");
+    });
+    pickOne(kinds)();
+  }
+  if (g.event || g.over) return;
+  const host = g.provs[g.leaderAt] ? g.provs[g.leaderAt].owner : pid;
+  const abroad = host !== pid;
+  const T = threatAt(g, g.leaderAt);
+  if (abroad && il >= 2 && T >= 2.5 && !g.forewarned && rnd() < 0.3) {
+    g.forewarned = true;
+    glog(g, "🕵️ Intel warning: chatter suggests a plot against your life at your current location. Your security detail has been doubled.", "intel");
+  }
+  let pAtt = T <= 0.5 ? 0 : T * 0.022 + (abroad ? 0.012 : 0);
+  if (g.forewarned) pAtt *= 0.35;
+  if (g.wounded > 0) pAtt = 0;
+  if (rnd() < pAtt) {
+    g.forewarned = false;
+    const survive = rnd() < 0.72 + il * 0.05 + (g.securityBoost > 0 ? 0.1 : 0);
+    if (survive) {
+      g.event = { kind: "assF", from: abroad && host !== "neutral" ? host : null };
+      if (abroad && host !== "neutral") g.rel[pk(pid, host)] = Math.max(-100, g.rel[pk(pid, host)] - 15);
+      glog(g, "💥 An assassination attempt against you has been foiled!", "major");
+      g.news = "Assassination attempt foiled!";
+    } else {
+      const killed = T >= 5 && rnd() < 0.3;
+      if (killed) {
+        g.over = { type: "loss", title: "Assassinated", msg: "Your motorcade was ambushed far from home. The nation mourns, and your story ends here." };
+        glog(g, "💀 The leader has been assassinated.", "major");
+      } else {
+        g.wounded = 3;
+        g.leaderAt = P.cap;
+        g.event = { kind: "assW" };
+        P.approval = Math.min(100, P.approval + 3);
+        glog(g, "💥 You were wounded in an assassination attempt and flown home to recover.", "major");
+        g.news = "The leader was wounded in an attack.";
+      }
+    }
+    return;
+  }
+  if (g.turn < 3) return;
+  if (abroad && rnd() < 0.14) {
+    if (rnd() < 0.5) {
+      const cand = others.filter((o) => g.rel[pk(pid, o)] < -20 && !atWar(g, pid, o) && bordersOf(g, pid).includes(o));
+      if (cand.length) {
+        const o = pickOne(cand);
+        const bcs = nationProvs(g, pid).filter((i) => ADJ[i].some((j) => g.provs[j].owner === o));
+        if (bcs.length) { g.event = { kind: "fm_border", from: o, city: pickOne(bcs) }; return; }
+      }
+    }
+    const cs = nationProvs(g, pid);
+    if (cs.length) { g.event = { kind: "fm_home", city: pickOne(cs) }; return; }
+  }
+  if (rnd() < 0.38) {
+    const opts = [];
+    const friendly = others.filter((o) => g.rel[pk(pid, o)] > 5 && !atWar(g, pid, o));
+    if (friendly.length && !g.traveled && g.wounded === 0) opts.push({ kind: "visit", from: pickOne(friendly) });
+    const traders = others.filter((o) => g.rel[pk(pid, o)] > -10 && !atWar(g, pid, o));
+    if (traders.length) opts.push({ kind: "trade", from: pickOne(traders), amt: 25 + Math.floor(rnd() * 30) });
+    const bullies = others.filter((o) => g.rel[pk(pid, o)] < -30 && !atWar(g, pid, o) && armyOf(g, o) > armyOf(g, pid) * 1.2);
+    if (bullies.length) opts.push({ kind: "ultimatum", from: pickOne(bullies), amt: 40 + Math.floor(rnd() * 40) });
+    const als = alliesOf(g, pid);
+    if (als.length) opts.push({ kind: "exercise", from: pickOne(als) });
+    opts.push({ kind: "festival" });
+    opts.push({ kind: "scandal" });
+    opts.push({ kind: "celebrity" });
+    const myCities = nationProvs(g, pid);
+    if (myCities.length) opts.push({ kind: "disaster", city: pickOne(myCities), dtype: pickOne(["earthquake", "flood", "hurricane", "wildfire"]) });
+    const devable = myCities.filter((i) => g.provs[i].dev < 9);
+    if (devable.length) opts.push({ kind: "discovery", city: pickOne(devable) });
+    const tense = others.filter((o) => !atWar(g, pid, o) && g.rel[pk(pid, o)] < 10 && bordersOf(g, pid).includes(o));
+    if (tense.length) opts.push({ kind: "border", from: pickOne(tense) });
+    const labs = others.filter((o) => g.rel[pk(pid, o)] < 20);
+    if (labs.length) opts.push({ kind: "defector", from: pickOne(labs) });
+    const warring = others.filter((o) => warsOf(g, o).length > 0 && !atWar(g, pid, o));
+    if (warring.length) opts.push({ kind: "refugees", from: pickOne(warring) });
+    if (opts.length) g.event = pickOne(opts);
+  }
+}
+
+// minister / clerk tasks
+function genTask(g) {
+  if (g.event || g.over) return;
+  if (rnd() > 0.55) return;
+  const myCities = nationProvs(g, g.player);
+  if (g.role === "minister") {
+    const opts = [{ kind: "m_budget" }, { kind: "m_press" }, { kind: "m_tv" }, { kind: "m_charity" }];
+    if (myCities.length) opts.push({ kind: "m_constituency", city: pickOne(myCities) });
+    g.event = pickOne(opts);
+  } else if (g.role === "clerk") {
+    g.event = pickOne([{ kind: "c_filing" }, { kind: "c_bosserror" }, { kind: "c_party" }]);
+  }
+}
+
+function eventContent(g, ev) {
+  const nm = (nid) => (nid && g.nations[nid] ? g.nations[nid].name : "");
+  const capName = (nid) => CDEF[g.nations[nid].cap].name;
+  switch (ev.kind) {
+    case "visit":
+      return { title: `📜 State visit invitation`, text: `${nm(ev.from)} has invited you for an official state visit to ${capName(ev.from)}. They will cover all costs, and the photo opportunities alone would warm relations considerably.`, choices: [{ a: "visit_yes", label: `Accept and fly to ${capName(ev.from)} (+12 relations)` }, { a: "visit_no", label: "Politely decline (-4 relations)" }] };
+    case "trade":
+      return { title: `🤝 Trade deal offered`, text: `${nm(ev.from)} proposes a trade agreement that would bring roughly $${ev.amt} into your treasury and bind your economies closer together.`, choices: [{ a: "trade_yes", label: `Sign the deal (+$${ev.amt}, +8 relations)` }, { a: "trade_no", label: "Decline (-3 relations)" }] };
+    case "ultimatum":
+      return { title: `⚠️ Ultimatum from ${nm(ev.from)}`, text: `${nm(ev.from)} demands $${ev.amt} in "security contributions", hinting at consequences if you refuse. Their military considerably outweighs yours.`, choices: [{ a: "ult_pay", label: `Pay $${ev.amt} (-6 approval, eases tensions)` }, { a: "ult_refuse", label: "Refuse defiantly (+5 approval, they may retaliate)" }] };
+    case "exercise":
+      return { title: `🪖 Joint military exercises`, text: `Your ally ${nm(ev.from)} proposes joint military exercises. Funding our share would sharpen our forces and deepen the alliance.`, choices: [{ a: "ex_yes", label: "Fund the exercises ($20: +10 troops at capital, +8 relations)" }, { a: "ex_no", label: "Not this year (-4 relations)" }] };
+    case "festival":
+      return { title: `🎉 National festival proposed`, text: `Your culture ministry proposes a grand national festival to lift the public mood.`, choices: [{ a: "fest_yes", label: "Fund it ($15, +5 approval)" }, { a: "fest_no", label: "The treasury comes first" }] };
+    case "fm_border":
+      return { title: `📞 URGENT — call from your foreign minister`, text: `"Sorry to interrupt your trip — our intelligence shows ${nm(ev.from)} massing forces near ${CDEF[ev.city].name}. We should respond before this escalates."`, choices: [{ a: "fmb_reinforce", label: `Reinforce ${CDEF[ev.city].name} ($30: +15 troops)` }, { a: "fmb_ignore", label: "It is probably a bluff. Continue the trip." }] };
+    case "fm_home":
+      return { title: `📞 URGENT — call from your foreign minister`, text: `"While you are abroad, unrest is brewing in ${CDEF[ev.city].name}. The press is asking where the leader is. We need a decision."`, choices: [{ a: "fmh_fly", label: "Fly home immediately (+2 approval)" }, { a: "fmh_remote", label: "Handle it remotely (-3 approval)" }] };
+    case "assF":
+      return { title: `💥 Assassination attempt foiled`, text: `Shots were fired at your convoy${ev.from ? ` during your visit to ${nm(ev.from)}` : ""} — your security detail neutralized the attackers before they got close.`, choices: [{ a: "ass_address", label: "Address the nation, defiant (+7 approval)" }, { a: "ass_security", label: "Quietly boost security ($20, safer travels)" }] };
+    case "assW":
+      return { title: `🏥 Wounded in an attack`, text: `Assassins got too close this time. You survived, but doctors order rest in the capital — no travel for 3 turns. The public rallies around you in sympathy.`, choices: [{ a: "dismiss", label: "Focus on recovery" }] };
+    case "scandal":
+      return { title: `🗞️ Corruption scandal`, text: `Your interior minister has been caught funneling public funds to cronies. The press smells blood and the opposition is calling for heads to roll.`, choices: [{ a: "scandal_fire", label: "Fire him publicly (+3 approval)" }, { a: "scandal_cover", label: "Cover it up (risky — if it leaks, it gets ugly)" }] };
+    case "disaster":
+      return { title: `🌊 ${ev.dtype.charAt(0).toUpperCase() + ev.dtype.slice(1)} strikes ${CDEF[ev.city].name}`, text: `A devastating ${ev.dtype} has hit ${CDEF[ev.city].name}. Homes are destroyed, and the cameras are rolling as the people look to their leader.`, choices: [{ a: "dis_relief", label: "Fund disaster relief ($30, +3 approval)" }, { a: "dis_ignore", label: "The budget is tight (-6 approval, city suffers)" }] };
+    case "discovery":
+      return { title: `⛏️ Resource discovery near ${CDEF[ev.city].name}`, text: `Geologists report a major resource find near ${CDEF[ev.city].name}. Investors are circling.`, choices: [{ a: "disc_invest", label: `Develop it ourselves ($40: +2 development in ${CDEF[ev.city].name})` }, { a: "disc_sell", label: "Sell the extraction rights (+$50)" }] };
+    case "border":
+      return { title: `🚧 Border incident with ${nm(ev.from)}`, text: `Patrols exchanged fire along the border with ${nm(ev.from)} overnight. Both sides blame the other, and the story is exploding on social media.`, choices: [{ a: "bor_apologize", label: "De-escalate and apologize (+6 relations, -3 approval)" }, { a: "bor_blame", label: "Blame them loudly (+4 approval, -10 relations)" }] };
+    case "defector":
+      return { title: `🧪 High-profile defector`, text: `A leading scientist from ${nm(ev.from)} has appeared at your embassy requesting asylum — and offering a head full of valuable research.`, choices: [{ a: "def_grant", label: "Grant asylum (+1 development at the capital, -10 relations)" }, { a: "def_return", label: `Hand them back to ${nm(ev.from)} (+8 relations)` }] };
+    case "celebrity":
+      return { title: `🌟 Celebrity endorsement`, text: `The world-famous pop star Lúna offers to headline a stadium rally in your support — for a modest fee and unlimited backstage catering.`, choices: [{ a: "celeb_yes", label: "Book the rally ($10, +4 approval)" }, { a: "dismiss", label: "Politics is not show business" }] };
+    case "refugees":
+      return { title: `🧳 Refugee crisis`, text: `The war involving ${nm(ev.from)} is sending thousands of refugees toward your borders. Aid groups plead for compassion; others warn of the strain.`, choices: [{ a: "ref_open", label: "Open the borders (+0.4M population at the capital, -3 approval)" }, { a: "ref_close", label: "Close the borders (+2 approval)" }] };
+    case "debate": {
+      const D = DEBATES[ev.qi];
+      const hint = (g.nations[g.player].intel || 0) >= 3 ? ` Your pollsters whisper: "The public leans toward — ${D.a[ev.good]}."` : "";
+      return { title: `🎤 Election debate — the nation is watching`, text: `Election day is near, and in tonight's televised debate the moderator puts you on the spot: "${D.q}" One answer will electrify the voters; the other will haunt you.${hint}`, choices: [{ a: "debate_0", label: D.a[0] }, { a: "debate_1", label: D.a[1] }] };
+    }
+    // minister & clerk life
+    case "m_budget":
+      return { title: `💼 Ministry budget meeting`, text: `The finance committee is deadlocked over your department's budget, and all eyes turn to you.`, choices: [{ a: "mb_fight", label: "Fight hard for more funding (risky, could impress)" }, { a: "mb_accept", label: "Accept the cuts gracefully (+2 popularity)" }] };
+    case "m_press":
+      return { title: `🎙️ Ambushed by a journalist`, text: `A journalist corners you on camera about the government's recent failures. Millions will see this clip.`, choices: [{ a: "mp_defend", label: "Defend the government loyally (gamble)" }, { a: "mp_distance", label: "Carefully distance yourself (+2, small leak risk)" }] };
+    case "m_constituency":
+      return { title: `🏘️ Delegation from ${CDEF[ev.city].name}`, text: `Local representatives from ${CDEF[ev.city].name} beg you to fast-track help for a local crisis. Strictly speaking, it is not your department.`, choices: [{ a: "mc_strings", label: "Pull some strings (popular, but risky)" }, { a: "mc_procedure", label: "Follow procedure (+1 popularity)" }] };
+    case "m_tv":
+      return { title: `📺 Panel show invitation`, text: `A prime-time panel show wants you as this week's guest. A chance to shine — or to faceplant on live TV.`, choices: [{ a: "mt_go", label: "Go on the show (gamble for big points)" }, { a: "mt_decline", label: "Politely decline" }] };
+    case "m_charity":
+      return { title: `🎗️ Charity gala`, text: `You are invited to open a charity gala. Easy smiles, easy headlines.`, choices: [{ a: "mch_go", label: "Attend and give a heartfelt speech (+3 popularity)" }] };
+    case "c_filing":
+      return { title: `🗂️ Mountains of paperwork`, text: `The filing backlog has reached biblical proportions, and somehow it is your problem now.`, choices: [{ a: "cf_overtime", label: "Work overtime and clear it (+4 reputation)" }, { a: "cf_slack", label: "Slip out early (risky)" }] };
+    case "c_bosserror":
+      return { title: `👀 You spot your boss's blunder`, text: `Reviewing documents, you find a costly error made by your department head. Nobody else has noticed... yet.`, choices: [{ a: "cb_fix", label: "Quietly fix it (+3 reputation)" }, { a: "cb_report", label: "Report it upward (bold gamble)" }] };
+    case "c_party":
+      return { title: `🎂 Office party duty`, text: `You have been "volunteered" to organize the office summer party.`, choices: [{ a: "cp_organize", label: "Throw a legendary party (+3 reputation)" }] };
+    case "demoted":
+      return { title: `📉 Performance review: demoted`, text: `Your popularity has cratered, and the government quietly reassigns you. You clear out your ministerial office and report to a windowless cubicle. You are now a clerk. Climb back.`, choices: [{ a: "dismiss", label: "Keep your head down... for now" }] };
+    case "promoted":
+      return { title: `📈 Performance review: promoted!`, text: `Your diligence has not gone unnoticed. You are promoted back to minister — one step from the top. The comeback is on.`, choices: [{ a: "dismiss", label: "Back in the game" }] };
+    default:
+      return { title: "Event", text: "", choices: [{ a: "dismiss", label: "Continue" }] };
+  }
+}
+
+function resolveEvent(g, action) {
+  const ev = g.event;
+  if (!ev) return;
+  const pid = g.player, P = g.nations[pid];
+  const radd = (nid, v) => { g.rel[pk(pid, nid)] = Math.max(-100, Math.min(100, g.rel[pk(pid, nid)] + v)); };
+  const aadd = (v) => { P.approval = Math.max(0, Math.min(100, P.approval + v)); };
+  const padd = (v) => { g.popularity = Math.max(0, Math.min(100, g.popularity + v)); };
+  switch (action) {
+    case "visit_yes":
+      g.leaderAt = g.nations[ev.from].cap; g.traveled = true; radd(ev.from, 12);
+      glog(g, `🛬 You arrive in ${CDEF[g.leaderAt].name} for a state visit hosted by ${g.nations[ev.from].name}.`, "major");
+      g.news = `State visit to ${g.nations[ev.from].name}.`;
+      break;
+    case "visit_no": radd(ev.from, -4); glog(g, `You decline ${g.nations[ev.from].name}'s invitation.`); break;
+    case "trade_yes": P.treasury += ev.amt; radd(ev.from, 8); glog(g, `🤝 Trade deal signed with ${g.nations[ev.from].name} (+$${ev.amt}).`, "major"); break;
+    case "trade_no": radd(ev.from, -3); break;
+    case "ult_pay": P.treasury -= ev.amt; radd(ev.from, 10); aadd(-6); glog(g, `You pay ${g.nations[ev.from].name}'s demands. The opposition calls it appeasement.`, "war"); break;
+    case "ult_refuse":
+      radd(ev.from, -15); aadd(5);
+      glog(g, `You refuse ${g.nations[ev.from].name}'s ultimatum. The people cheer your defiance.`, "major");
+      if (rnd() < 0.4) { joinWar(g, ev.from, pid); glog(g, `🔥 ${g.nations[ev.from].name} responds with a declaration of war!`, "major"); g.news = `${g.nations[ev.from].name} declares war!`; }
+      break;
+    case "ex_yes": P.treasury -= 20; g.provs[P.cap].troops = Math.min(250, g.provs[P.cap].troops + 10); radd(ev.from, 8); glog(g, `🪖 Joint exercises held with ${g.nations[ev.from].name}.`); break;
+    case "ex_no": radd(ev.from, -4); break;
+    case "fest_yes": P.treasury -= 15; aadd(5); glog(g, `🎉 The national festival is a hit.`); break;
+    case "fest_no": break;
+    case "fmb_reinforce": P.treasury -= 30; g.provs[ev.city].troops = Math.min(250, g.provs[ev.city].troops + 15); glog(g, `Reinforcements rushed to ${CDEF[ev.city].name}.`); break;
+    case "fmb_ignore": break;
+    case "fmh_fly": g.leaderAt = P.cap; g.traveled = true; aadd(2); glog(g, `You cut the trip short and fly home.`); break;
+    case "fmh_remote": aadd(-3); break;
+    case "ass_address": aadd(7); glog(g, `Your defiant address electrifies the nation.`, "major"); break;
+    case "ass_security": P.treasury -= 20; g.securityBoost = 4; glog(g, `Your security detail is expanded.`); break;
+    case "scandal_fire": aadd(3); glog(g, `You fire the minister on live television.`); break;
+    case "scandal_cover":
+      if (rnd() < 0.55) glog(g, `The cover-up holds... for now.`);
+      else { aadd(-10); glog(g, `🗞️ The cover-up leaks! Headlines scream of corruption (-10 approval).`, "war"); g.news = "Cover-up exposed."; }
+      break;
+    case "dis_relief": P.treasury -= 30; aadd(3); glog(g, `Relief crews pour into ${CDEF[ev.city].name}.`); break;
+    case "dis_ignore": aadd(-6); g.provs[ev.city].pop = +(g.provs[ev.city].pop * 0.95).toFixed(2); glog(g, `${CDEF[ev.city].name} is left to fend for itself.`, "war"); break;
+    case "disc_invest": P.treasury -= 40; g.provs[ev.city].dev = Math.min(10, g.provs[ev.city].dev + 2); glog(g, `⛏️ ${CDEF[ev.city].name} becomes a boomtown (+2 development).`, "major"); break;
+    case "disc_sell": P.treasury += 50; glog(g, `Extraction rights near ${CDEF[ev.city].name} sold (+$50).`); break;
+    case "bor_apologize": radd(ev.from, 6); aadd(-3); glog(g, `You de-escalate the border incident with ${g.nations[ev.from].name}.`); break;
+    case "bor_blame": radd(ev.from, -10); aadd(4); glog(g, `You blame ${g.nations[ev.from].name}. The crowd loves it.`); break;
+    case "def_grant": g.provs[P.cap].dev = Math.min(10, g.provs[P.cap].dev + 1); radd(ev.from, -10); glog(g, `🧪 The defector's research boosts your capital. ${g.nations[ev.from].name} is livid.`, "major"); break;
+    case "def_return": radd(ev.from, 8); glog(g, `You quietly return the defector.`); break;
+    case "celeb_yes": P.treasury -= 10; aadd(4); glog(g, `🌟 Lúna's rally is a spectacle.`); break;
+    case "ref_open": g.provs[P.cap].pop = +(g.provs[P.cap].pop + 0.4).toFixed(2); aadd(-3); glog(g, `🧳 You open the borders. The capital swells.`); break;
+    case "ref_close": aadd(2); glog(g, `The borders stay closed. Aid groups protest.`); break;
+    case "debate_0":
+    case "debate_1": {
+      const chosen = action === "debate_1" ? 1 : 0;
+      if (chosen === ev.good) { aadd(20); glog(g, `🎤 Debate triumph! Approval surges (+20%).`, "major"); g.news = "Debate triumph!"; }
+      else { aadd(-20); glog(g, `🎤 Debate disaster (-20% approval). The clips are everywhere.`, "war"); g.news = "Debate disaster."; }
+      break;
+    }
+    // minister tasks
+    case "mb_fight": if (rnd() < 0.6) { padd(6); glog(g, `💼 You win the budget fight. Your stock rises (+6 popularity).`); } else { padd(-4); glog(g, `💼 You lose the budget fight publicly (-4 popularity).`); } break;
+    case "mb_accept": padd(2); glog(g, `You accept the cuts with grace (+2 popularity).`); break;
+    case "mp_defend": if (rnd() < 0.5) { padd(5); glog(g, `🎙️ Your loyal defense plays well (+5 popularity).`); } else { padd(-5); glog(g, `🎙️ Your defense of the government backfires (-5 popularity).`); } break;
+    case "mp_distance": if (rnd() < 0.8) { padd(2); glog(g, `You deftly distance yourself (+2 popularity).`); } else { padd(-6); glog(g, `Your disloyalty leaks to the leader's office (-6 popularity).`); } break;
+    case "mc_strings": if (rnd() < 0.7) { padd(6); glog(g, `🏘️ You pull strings for ${CDEF[ev.city].name}. The locals adore you (+6 popularity).`); } else { padd(-5); glog(g, `🏘️ You are accused of favoritism (-5 popularity).`); } break;
+    case "mc_procedure": padd(1); break;
+    case "mt_go": if (rnd() < 0.55) { padd(7); glog(g, `📺 You shine on the panel show (+7 popularity).`); } else { padd(-5); glog(g, `📺 The panel show goes badly. The memes are brutal (-5 popularity).`); } break;
+    case "mt_decline": break;
+    case "mch_go": padd(3); glog(g, `🎗️ Your gala speech earns warm headlines (+3 popularity).`); break;
+    // clerk tasks
+    case "cf_overtime": padd(4); glog(g, `🗂️ You clear the backlog. Management notices (+4 reputation).`); break;
+    case "cf_slack": if (rnd() < 0.6) glog(g, `You slip out early. Nobody notices.`); else { padd(-5); glog(g, `You were spotted leaving early (-5 reputation).`); } break;
+    case "cb_fix": padd(3); glog(g, `You quietly fix the error. Your boss owes you (+3 reputation).`); break;
+    case "cb_report": if (rnd() < 0.5) { padd(8); glog(g, `👀 Your report impresses senior management (+8 reputation).`); } else { padd(-6); glog(g, `👀 Your boss buries you in retaliation (-6 reputation).`); } break;
+    case "cp_organize": padd(3); glog(g, `🎂 The office party is legendary (+3 reputation).`); break;
+    default: break;
+  }
+  g.event = null;
+}
+
+// ============ AI ============
+function aiTurn(g, nid) {
+  const n = g.nations[nid];
+  if (n.eliminated) return;
+  n.treasury += netOf(g, nid);
+  if (n.treasury < 0) {
+    nationProvs(g, nid).forEach((i) => { const p = g.provs[i]; if (p.troops > 5) p.troops = Math.round(p.troops * 0.9); });
+    n.treasury = Math.max(n.treasury, -20);
+  }
+  const my = nationProvs(g, nid);
+  if (!my.length) return;
+  if (n.treasury > 50 && rnd() < 0.7) {
+    const threatened = my.filter((i) => ADJ[i].some((j) => { const o = g.provs[j].owner; return o !== nid && o !== "neutral" && (atWar(g, nid, o) || g.rel[pk(nid, o)] < -20); }));
+    const pool = threatened.length ? threatened : my;
+    pool.sort((a, b) => g.provs[a].troops - g.provs[b].troops);
+    const tr = Math.min(40, Math.floor(Math.min(n.treasury * 0.5, 80) / 2));
+    if (tr > 0) { g.provs[pool[0]].troops = Math.min(250, g.provs[pool[0]].troops + tr); n.treasury -= tr * 2; }
+  }
+  if (n.treasury > 90 && rnd() < 0.25) {
+    const p = g.provs[my[Math.floor(rnd() * my.length)]];
+    const cost = 25 + p.dev * 12;
+    if (p.dev < 10 && n.treasury > cost + 40) { p.dev++; n.treasury -= cost; }
+  }
+  if (rnd() < 0.4) {
+    for (const i of my) {
+      const nb = ADJ[i].find((j) => g.provs[j].owner === "neutral");
+      if (nb) {
+        const c = 45 + Math.round(g.provs[nb].pop * 8);
+        if (n.treasury > c + 40) { n.treasury -= c; g.provs[nb].owner = nid; g.provs[nb].troops = 10; glog(g, `${n.name} expands into ${CDEF[nb].name}.`); }
+        break;
+      }
+    }
+  }
+  const bset = bordersOf(g, nid);
+  Object.keys(g.nations).forEach((o) => {
+    if (o === nid || g.nations[o].eliminated) return;
+    const k = pk(nid, o);
+    if (g.allies[k]) g.rel[k] = Math.min(100, g.rel[k] + 0.8);
+    else if (g.wars[k] === undefined) {
+      let drift = (rnd() - 0.55) * 2;
+      if (n.ag > 0.5 && bset.includes(o)) drift -= 0.5;
+      g.rel[k] = Math.max(-100, Math.min(100, g.rel[k] + drift));
+    }
+  });
+  if (g.turn > 3 && rnd() < n.ag * 0.22) {
+    const myA = armyOf(g, nid);
+    const cands = bset.filter((o) => o !== "neutral" && g.nations[o] && !g.nations[o].eliminated && !isAllied(g, nid, o) && !atWar(g, nid, o) && g.rel[pk(nid, o)] < -28);
+    for (const o of cands) {
+      const coal = armyOf(g, o) + alliesOf(g, o).reduce((s, a) => s + armyOf(g, a) * 0.5, 0);
+      if (myA > coal * 1.35) {
+        joinWar(g, nid, o);
+        glog(g, `🔥 ${n.name} declares war on ${g.nations[o].name}!`, "major");
+        g.news = `${n.name} declares war on ${g.nations[o].name}!`;
+        break;
+      }
+    }
+  }
+  let attacks = 0;
+  const sorted = [...my].sort((a, b) => g.provs[b].troops - g.provs[a].troops);
+  for (const pid2 of sorted) {
+    if (attacks >= 2) break;
+    const pp = g.provs[pid2];
+    if (pp.acted || pp.troops < 12 || pp.owner !== nid) continue;
+    const tg = ADJ[pid2].filter((j) => { const q = g.provs[j]; return q.owner !== nid && q.owner !== "neutral" && atWar(g, nid, q.owner) && pp.troops > q.troops * 1.35 + 8; });
+    if (tg.length) { tg.sort((a, b) => g.provs[a].troops - g.provs[b].troops); battle(g, pid2, tg[0]); attacks++; }
+  }
+  warsOf(g, nid).forEach((o) => {
+    const k = pk(nid, o);
+    g.wars[k] = (g.wars[k] || 0) + 0.5;
+    if (o !== g.player && nid !== g.player && g.wars[k] > 4 && rnd() < 0.3) { endWarBetween(g, nid, o); glog(g, `🕊️ ${n.name} and ${g.nations[o].name} sign a peace treaty.`); }
+  });
+  if (nid !== g.player && g.role === "leader") {
+    const k2 = pk(nid, g.player);
+    const hasPeace = g.offers.some((o) => o.from === nid && o.type === "peace");
+    const hasAlly = g.offers.some((o) => o.from === nid && o.type === "alliance");
+    const allyCount = g.offers.filter((o) => o.type === "alliance").length;
+    if (atWar(g, nid, g.player) && g.wars[k2] >= 3 && (armyOf(g, nid) < armyOf(g, g.player) * 0.75 || rnd() < 0.15) && !hasPeace) g.offers.push({ id: rnd().toString(36).slice(2), from: nid, type: "peace" });
+    if (!atWar(g, nid, g.player) && !isAllied(g, nid, g.player) && g.rel[k2] > 65 && rnd() < 0.12 && allyCount < 3 && !hasAlly) g.offers.push({ id: rnd().toString(36).slice(2), from: nid, type: "alliance" });
+  }
+}
+
+// ============ TURN ============
+function processTurn(g) {
+  const pid = g.player, P = g.nations[pid];
+  const isLeader = g.role === "leader";
+  g.traveled = false;
+  if (g.wounded > 0) g.wounded--;
+  if (g.securityBoost > 0) g.securityBoost--;
+  if (isLeader) {
+    P.treasury += netOf(g, pid);
+    if (P.treasury < 0) {
+      P.approval -= 5;
+      glog(g, "⚠️ The treasury is in deficit! Approval suffers and troops desert.", "war");
+      nationProvs(g, pid).forEach((i) => { g.provs[i].troops = Math.round(g.provs[i].troops * 0.92); });
+      P.treasury = Math.max(P.treasury, -30);
+    }
+  } else {
+    aiTurn(g, pid); // the rival government runs the nation
+    g.offers = [];
+  }
+  Object.keys(g.nations).forEach((nid) => { if (nid !== pid) aiTurn(g, nid); });
+  if (!g.provs[g.leaderAt]) g.leaderAt = P.cap;
+  let host = g.provs[g.leaderAt].owner;
+  if (host !== pid && host !== "neutral" && atWar(g, pid, host)) {
+    g.leaderAt = P.cap;
+    if (isLeader) P.approval = Math.max(0, P.approval - 8);
+    glog(g, "🚨 Your location fell into enemy hands — you were evacuated in dramatic fashion.", "major");
+    host = pid;
+  }
+  if (isLeader && host !== pid && host !== "neutral") g.rel[pk(pid, host)] = Math.min(100, g.rel[pk(pid, host)] + 2);
+  warsOf(g, pid).forEach((o) => { const k = pk(pid, o); g.wars[k] = (g.wars[k] || 0) + 1; });
+  P.warWeary = warsOf(g, pid).length ? Math.min(12, P.warWeary + 1) : Math.max(0, P.warWeary - 2);
+  const touring = g.provs[g.leaderAt].owner === pid && g.leaderAt !== P.cap ? 3 : 0;
+  const target = 55 + P.services * 6 + (isLeader ? touring : 0) - (P.tax - 20) * 0.9 - warsOf(g, pid).length * 6 - P.warWeary * 1.2;
+  P.approval = Math.max(0, Math.min(100, P.approval + (target - P.approval) * 0.3));
+  if (!isLeader) {
+    g.popularity = Math.max(0, Math.min(100, g.popularity + (45 - g.popularity) * 0.05 + (touring && g.role === "minister" ? 1.5 : 0)));
+  }
+  Object.keys(g.provs).forEach((i) => { const p = g.provs[i]; p.pop = +(p.pop * (1 + 0.0025 * p.dev + (p.uni ? 0.004 : 0))).toFixed(2); p.acted = false; });
+  g.turn++;
+  g.roleTurns++;
+  let election = false;
+  if (isLeader && P.gov === "democracy" && g.turn % ELECTION_CYCLE === 0) {
+    if (P.approval >= 45) { P.approval = Math.min(100, P.approval + 6); glog(g, `🗳️ You win the election with ${Math.round(P.approval)}% approval! Mandate renewed.`, "major"); g.news = "Election won!"; }
+    else election = true;
+  }
+  // career reviews for minister / clerk
+  if (!isLeader && g.roleTurns > 0 && g.roleTurns % 10 === 0 && !g.over) {
+    if (g.role === "minister" && g.popularity < 25) {
+      g.role = "clerk"; g.popularity = 40; g.roleTurns = 0;
+      g.event = { kind: "demoted" };
+      glog(g, "📉 Demoted to clerk after a disastrous performance review.", "major");
+      g.news = "You have been demoted to clerk.";
+    } else if (g.role === "clerk") {
+      if (g.popularity >= 70) {
+        g.role = "minister"; g.popularity = 50; g.roleTurns = 0;
+        g.event = { kind: "promoted" };
+        glog(g, "📈 Promoted back to minister!", "major");
+        g.news = "Promoted back to minister!";
+      } else if (g.popularity < 15) {
+        g.over = { type: "loss", title: "Career Over", msg: "Fired from even the clerk's desk, you fade into obscurity. Somewhere, a memoir goes unwritten." };
+      }
+    }
+  }
+  if (P.gov === "autocracy" && isLeader && P.approval < 20 && rnd() < 0.25) {
+    const ps = nationProvs(g, pid).filter((i) => i !== P.cap);
+    if (ps.length) { const i2 = pickOne(ps); g.provs[i2].owner = "neutral"; g.provs[i2].troops = 20; glog(g, `🔥 ${CDEF[i2].name} rises in rebellion!`, "major"); g.news = `Rebellion in ${CDEF[i2].name}!`; }
+  }
+  if (nationProvs(g, pid).length === 0) g.over = { type: "loss", title: "Defeat", msg: "Your nation has been conquered. Every city flies a foreign flag." };
+  if (isLeader && !g.victoryShown && nationProvs(g, pid).length >= 25) { g.victoryShown = true; g.over = { type: "victory", title: "🏆 World Superpower!", msg: `With ${nationProvs(g, pid).length} cities under your rule, ${P.name} is the undisputed superpower of the world!` }; }
+  if (!election && !g.over && !g.event) {
+    if (isLeader) {
+      if (P.gov === "democracy" && g.turn % ELECTION_CYCLE === ELECTION_CYCLE - 1) {
+        g.event = { kind: "debate", qi: Math.floor(rnd() * DEBATES.length), good: rnd() < 0.5 ? 0 : 1 };
+        glog(g, "🎤 The pre-election debate is tonight. Everything is at stake.", "major");
+      } else genEvents(g);
+    } else genTask(g);
+  }
+  return election;
+}
+
+function migrate(g) {
+  if (!g.leaderAt || !CDEF[g.leaderAt]) g.leaderAt = g.nations[g.player].cap;
+  if (g.traveled === undefined) g.traveled = false;
+  if (g.wounded === undefined) g.wounded = 0;
+  if (g.securityBoost === undefined) g.securityBoost = 0;
+  if (g.forewarned === undefined) g.forewarned = false;
+  if (g.event === undefined) g.event = null;
+  if (g.duel === undefined) g.duel = null;
+  if (!g.role) g.role = "leader";
+  if (g.popularity === undefined) g.popularity = 50;
+  if (g.roleTurns === undefined) g.roleTurns = 0;
+  if (g.rival === undefined) g.rival = null;
+  Object.keys(g.nations).forEach((n) => { if (g.nations[n].intel === undefined) g.nations[n].intel = 0; });
+  Object.keys(g.provs).forEach((i) => { const p = g.provs[i]; if (p.uni === undefined) { p.uni = 0; p.bar = 0; p.air = 0; } });
+  return g;
+}
+
+// ============ UI ============
+const BTN = { background: "#2c4a6e", color: "#dbe7f3", border: "1px solid #41648c", borderRadius: 6, padding: "5px 10px", cursor: "pointer", fontSize: 12, fontWeight: 600 };
+const BTN2 = { ...BTN, background: "#1c2f44", padding: "4px 8px", fontSize: 11 };
+const BTNW = { ...BTN, background: "#7a2e2e", border: "1px solid #a14444" };
+const BTNG = { ...BTN, background: "#2e6e44", border: "1px solid #44a165" };
+const Bar = ({ v, color }) => (
+  <div style={{ background: "#16222f", borderRadius: 4, height: 8, overflow: "hidden", flex: 1 }}>
+    <div style={{ width: `${Math.max(0, Math.min(100, v))}%`, height: "100%", background: color, transition: "width .3s" }} />
+  </div>
+);
+const ROLE_LABEL = { leader: "👑 Head of State", minister: "💼 Minister", clerk: "📎 Government Clerk" };
+
+function App() {
+  const [phase, setPhase] = useState("pick");
+  const [veteran, setVeteran] = useState(false);
+  const [pickN, setPickN] = useState(null);
+  const [g, setG] = useState(null);
+  const [sel, setSel] = useState(null);
+  const [mode, setMode] = useState(null);
+  const [moveDlg, setMoveDlg] = useState(null);
+  const [moveAmt, setMoveAmt] = useState(1);
+  const [tab, setTab] = useState("empire");
+  const [electionDlg, setElectionDlg] = useState(false);
+  const [view, setView] = useState({ x: 0, y: 0, k: 1 });
+  const [narrow, setNarrow] = useState(false);
+  const [geoPaths, setGeoPaths] = useState(null);
+  const drag = useRef(null);
+  const svgRef = useRef(null);
+  const fileRef = useRef(null);
+
+  useEffect(() => {
+    const f = () => setNarrow(window.innerWidth < 880);
+    f();
+    window.addEventListener("resize", f);
+    return () => window.removeEventListener("resize", f);
+  }, []);
+
+  useEffect(() => {
+    let dead = false;
+    const inject = (src) => new Promise((res, rej) => {
+      const s = document.createElement("script");
+      s.src = src; s.onload = res; s.onerror = rej;
+      document.head.appendChild(s);
+    });
+    const ready = () => {
+      try {
+        const topo = window.Datamap.prototype.worldTopo;
+        const feats = window.topojson.feature(topo, topo.objects.world).features;
+        const ringToPath = (ring) => {
+          let s = "";
+          ring.forEach((pt, i) => {
+            const [x, y] = project(pt[1], pt[0]);
+            s += (i === 0 ? "M" : "L") + x.toFixed(1) + "," + y.toFixed(1);
+          });
+          return s + "Z";
+        };
+        const paths = [];
+        feats.forEach((f) => {
+          if (f.id === "ATA" || !f.geometry) return;
+          let d = "";
+          if (f.geometry.type === "Polygon") f.geometry.coordinates.forEach((ring) => { d += ringToPath(ring); });
+          else if (f.geometry.type === "MultiPolygon") f.geometry.coordinates.forEach((poly) => poly.forEach((ring) => { d += ringToPath(ring); }));
+          if (d) paths.push({ iso: f.id, d });
+        });
+        let cells = null;
+        try {
+          const ids = Object.keys(CDEF);
+          const pts = ids.map((id) => XY[id]);
+          const vor = window.d3.geom.voronoi().clipExtent([[-40, -40], [MW + 40, MH + 40]]);
+          const polys = vor(pts);
+          cells = {};
+          polys.forEach((poly, i) => {
+            if (!poly || !poly.length) return;
+            cells[ids[i]] = "M" + poly.map((pt) => pt[0].toFixed(1) + "," + pt[1].toFixed(1)).join("L") + "Z";
+          });
+        } catch (e2) { cells = null; }
+        if (!dead) setGeoPaths({ paths, cells });
+      } catch (e) { if (!dead) setGeoPaths("failed"); }
+    };
+    if (window.Datamap && window.topojson && window.d3) { ready(); return; }
+    inject("https://cdnjs.cloudflare.com/ajax/libs/d3/3.5.17/d3.min.js")
+      .then(() => inject("https://cdnjs.cloudflare.com/ajax/libs/topojson/1.6.9/topojson.min.js"))
+      .then(() => inject("https://cdnjs.cloudflare.com/ajax/libs/datamaps/0.5.9/datamaps.world.min.js"))
+      .then(ready)
+      .catch(() => { if (!dead) setGeoPaths("failed"); });
+    return () => { dead = true; };
+  }, []);
+
+  useEffect(() => {
+    const svg = svgRef.current;
+    if (!svg || phase !== "play") return;
+    const onWheel = (e) => {
+      e.preventDefault();
+      const r = svg.getBoundingClientRect();
+      const mx = ((e.clientX - r.left) / r.width) * MW;
+      const my = ((e.clientY - r.top) / r.height) * MH;
+      setView((v) => {
+        const k2 = Math.max(0.9, Math.min(40, v.k * (e.deltaY < 0 ? 1.15 : 0.87)));
+        return { k: k2, x: mx - ((mx - v.x) * k2) / v.k, y: my - ((my - v.y) * k2) / v.k };
+      });
+    };
+    svg.addEventListener("wheel", onWheel, { passive: false });
+    return () => svg.removeEventListener("wheel", onWheel);
+  }, [phase]);
+
+  const mut = (fn) => setG((prev) => { const d = structuredClone(prev); fn(d); return d; });
+
+  function startGame(nid, capId) {
+    const game = freshGame(nid, capId);
+    setG(game); setPhase("play"); setSel(capId); setTab("empire"); setMode(null);
+    const k = 4, pt = XY[capId];
+    setView({ x: MW / 2 - pt[0] * k, y: MH / 2 - pt[1] * k, k });
+  }
+  function saveFile() {
+    try {
+      const blob = new Blob([JSON.stringify(g)], { type: "application/json" });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement("a");
+      a.href = url;
+      a.download = `world-conquest-${g.player}-turn${g.turn}.json`;
+      document.body.appendChild(a);
+      a.click();
+      a.remove();
+      setTimeout(() => URL.revokeObjectURL(url), 2000);
+      mut((d) => { d.news = "Save file downloaded to your computer."; });
+    } catch (e) { mut((d) => { d.news = "Could not create the save file."; }); }
+  }
+  function onLoadFile(e) {
+    const f = e.target.files && e.target.files[0];
+    e.target.value = "";
+    if (!f) return;
+    const rd = new FileReader();
+    rd.onload = () => {
+      try {
+        const ng = migrate(JSON.parse(rd.result));
+        ng.news = "Game loaded from file.";
+        setG(ng); setSel(null); setMode(null); setElectionDlg(false); setMoveDlg(null); setPhase("play");
+        const pt = XY[ng.nations[ng.player].cap];
+        if (pt) setView({ x: MW / 2 - pt[0] * 3, y: MH / 2 - pt[1] * 3, k: 3 });
+      } catch (err) { window.alert("That file does not look like a valid World Conquest save."); }
+    };
+    rd.readAsText(f);
+  }
+
+  if (phase === "pick") {
+    const groups = {
+      Europe: ["denmark", "norway", "sweden", "finland", "uk", "france", "germany", "spain", "italy", "poland", "ukraine"],
+      Americas: ["canada", "usa", "mexico", "colombia", "brazil", "argentina"],
+      "Middle East & Africa": ["turkey", "egypt", "nigeria", "southafrica"],
+      "Asia & Oceania": ["russia", "china", "india", "southkorea", "japan", "australia"],
+    };
+    return (
+      <div style={{ minHeight: "100vh", background: "linear-gradient(180deg,#0a1626,#0e2236)", color: "#e7eef6", fontFamily: "system-ui,sans-serif", padding: 24, boxSizing: "border-box" }}>
+        <div style={{ maxWidth: 900, margin: "0 auto" }}>
+          <h1 style={{ margin: 0, fontSize: 34, letterSpacing: 1 }}>🌍 WORLD CONQUEST</h1>
+          <p style={{ color: "#9fb4c9", marginTop: 6 }}>A real world map. Lead your nation in person — travel the globe, survive plots, win elections... or lose them, get demoted to minister, and claw your way back to the top.</p>
+          <label style={{ display: "flex", alignItems: "center", gap: 8, fontSize: 13, color: "#cfdce9", margin: "10px 0 10px", cursor: "pointer" }}>
+            <input type="checkbox" checked={veteran} onChange={(e) => setVeteran(e.target.checked)} /> Veteran mode (unlock great powers: USA, Russia, China)
+          </label>
+          <div style={{ margin: "0 0 18px" }}>
+            <button style={{ ...BTN, padding: "8px 14px" }} onClick={() => fileRef.current && fileRef.current.click()}>📂 Load saved game from file</button>
+            <input ref={fileRef} type="file" accept=".json,application/json" style={{ display: "none" }} onChange={onLoadFile} />
+          </div>
+          {Object.entries(groups).map(([gr, ids]) => (
+            <div key={gr} style={{ marginBottom: 18 }}>
+              <div style={{ fontSize: 12, textTransform: "uppercase", letterSpacing: 2, color: "#7e93a8", marginBottom: 8 }}>{gr}</div>
+              <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill,minmax(190px,1fr))", gap: 10 }}>
+                {ids.map((id) => {
+                  const n = NATIONS[id], locked = n.great && !veteran;
+                  const count = CITIES.filter((c) => c[4] === id).length;
+                  return (
+                    <button key={id} disabled={locked} onClick={() => { setPickN(id); setPhase("capital"); }}
+                      style={{ textAlign: "left", background: locked ? "#131e2b" : "#16283c", border: `1px solid ${locked ? "#22303f" : "#2c4459"}`, borderRadius: 10, padding: 12, cursor: locked ? "not-allowed" : "pointer", color: "inherit", opacity: locked ? 0.55 : 1, fontFamily: "inherit" }}>
+                      <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
+                        <span style={{ width: 14, height: 14, borderRadius: 4, background: n.color, display: "inline-block" }} />
+                        <b style={{ fontSize: 14 }}>{n.name}</b>
+                      </div>
+                      <div style={{ fontSize: 11.5, color: "#90a6bb", marginTop: 5 }}>{count} cities · {n.gov}{n.great ? (locked ? " · 🔒 Great power" : " · ⭐ Great power") : ""}</div>
+                    </button>
+                  );
+                })}
+              </div>
+            </div>
+          ))}
+          <p style={{ fontSize: 12, color: "#62788d" }}>Tip: small nations like Denmark or Norway make a great first game — fewer fronts to defend.</p>
+        </div>
+      </div>
+    );
+  }
+
+  if (phase === "capital") {
+    const cities = CITIES.filter((c) => c[4] === pickN);
+    return (
+      <div style={{ minHeight: "100vh", background: "linear-gradient(180deg,#0a1626,#0e2236)", color: "#e7eef6", fontFamily: "system-ui,sans-serif", padding: 24, boxSizing: "border-box" }}>
+        <div style={{ maxWidth: 600, margin: "40px auto" }}>
+          <h2 style={{ display: "flex", alignItems: "center", gap: 10 }}>
+            <span style={{ width: 16, height: 16, borderRadius: 4, background: NATIONS[pickN].color, display: "inline-block" }} />{NATIONS[pickN].name}
+          </h2>
+          <p style={{ color: "#9fb4c9" }}>Select your capital city — your seat of power and where you, the leader, will reside.</p>
+          <div style={{ display: "grid", gap: 8, marginTop: 14 }}>
+            {cities.map((c) => (
+              <button key={c[0]} onClick={() => startGame(pickN, c[0])} style={{ ...BTN, padding: "12px 14px", fontSize: 14, textAlign: "left", background: "#1a3047", fontFamily: "inherit" }}>
+                ★ {c[1]} {NATIONS[pickN].cap === c[0] ? <span style={{ color: "#8ea7bf", fontWeight: 400 }}>(historical capital)</span> : null}
+              </button>
+            ))}
+          </div>
+          <button onClick={() => setPhase("pick")} style={{ ...BTN2, marginTop: 16 }}>← Back</button>
+        </div>
+      </div>
+    );
+  }
+
+  // -------- main game --------
+  const P = g.nations[g.player];
+  const isLeader = g.role === "leader";
+  const selP = sel ? g.provs[sel] : null;
+  const inc = incomeOf(g, g.player), up = upkeepOf(g, g.player), sc = servCost(g, g.player), ic = intelCost(g, g.player), net = inc - up - sc - ic;
+
+  const vt = (() => {
+    const s = new Set();
+    if (!isLeader || !mode || !selP || selP.owner !== g.player || selP.acted) return s;
+    ADJ[sel].forEach((j) => {
+      const q = g.provs[j];
+      const allied = q.owner !== "neutral" && q.owner !== g.player && isAllied(g, g.player, q.owner);
+      if (q.owner === g.player || q.owner === "neutral" || atWar(g, g.player, q.owner) || allied) s.add(j);
+    });
+    return s;
+  })();
+
+  function clickCity(id) {
+    if (drag.current && drag.current.moved) return;
+    if (mode && vt.has(id) && id !== sel) {
+      const t = g.provs[id];
+      const alliedDest = t.owner !== "neutral" && t.owner !== g.player && isAllied(g, g.player, t.owner);
+      if (t.owner === g.player || alliedDest) {
+        setMoveAmt(Math.max(1, Math.floor(g.provs[sel].troops / 2)));
+        setMoveDlg({ from: sel, to: id, ally: alliedDest ? t.owner : null });
+        return;
+      }
+      const wasNeutral = t.owner === "neutral";
+      mut((d) => {
+        const r = battle(d, sel, id);
+        const PP = d.nations[d.player];
+        if (r.win) { PP.approval = Math.max(0, Math.min(100, PP.approval + (wasNeutral ? -2 : 4))); d.news = `Victory! ${CDEF[id].name} is ours.`; }
+        else d.news = `Our attack on ${CDEF[id].name} failed.`;
+      });
+      setMode(null);
+      return;
+    }
+    setMode(null); setSel(id);
+  }
+  function doMove(amtWanted) {
+    const allyId = moveDlg.ally;
+    mut((d) => {
+      const A = d.provs[moveDlg.from], B = d.provs[moveDlg.to];
+      const amt = Math.max(0, Math.min(A.troops, Math.floor(amtWanted)));
+      if (amt <= 0) return;
+      A.troops -= amt; B.troops = Math.min(250, B.troops + amt);
+      A.acted = true; B.acted = true;
+      if (allyId) {
+        const k = pk(d.player, allyId);
+        d.rel[k] = Math.min(100, d.rel[k] + Math.min(10, 3 + Math.round(amt / 10)));
+        glog(d, `🤝 You send ${amt} troops to defend ${CDEF[moveDlg.to].name} — ${d.nations[allyId].name} is deeply grateful.`, "major");
+        d.news = `Reinforcements sent to ${d.nations[allyId].name}.`;
+      }
+    });
+    setMoveDlg(null); setMode(null);
+  }
+  function endTurn() {
+    let el = false;
+    mut((d) => { el = processTurn(d); });
+    setMode(null);
+    if (el) setElectionDlg(true);
+  }
+  function startDuel() {
+    mut((d) => {
+      const idxs = DEBATES.map((_, i) => i).sort(() => rnd() - 0.5).slice(0, 5);
+      d.duel = { i: 0, ps: 0, ls: 0, qs: idxs, goods: idxs.map(() => (rnd() < 0.5 ? 0 : 1)) };
+      glog(d, `🎙️ You challenge ${d.rival || "the sitting leader"} to a live televised showdown!`, "major");
+      d.news = "The interview showdown is live!";
+    });
+  }
+  function duelAnswer(choice) {
+    mut((d) => {
+      const du = d.duel;
+      if (!du) return;
+      if (choice === du.goods[du.i]) du.ps++;
+      else du.ls++;
+      du.i++;
+      if (du.i >= du.qs.length) {
+        if (du.ps > du.ls) {
+          d.role = "leader"; d.rival = null; d.roleTurns = 0;
+          d.nations[d.player].approval = Math.max(45, Math.min(85, 45 + du.ps * 8));
+          glog(d, `👑 You demolish the sitting leader on live TV (${du.ps}-${du.ls}) and sweep back into power!`, "major");
+          d.news = "You are the leader once again!";
+        } else {
+          d.popularity = Math.max(0, d.popularity - 15);
+          d.roleTurns = 0;
+          glog(d, `🎙️ The sitting leader outduels you (${du.ls}-${du.ps}). Your comeback stalls (-15 popularity).`, "war");
+          d.news = "The showdown is lost. For now.";
+        }
+        d.duel = null;
+      }
+    });
+  }
+  async function save() { saveFile(); }
+  async function load() { if (fileRef.current) fileRef.current.click(); }
+  const fmt$ = (v) => `$${Math.round(v)}`;
+  const showNames = view.k >= 2.4;
+  const leaderXY = XY[g.leaderAt];
+
+  const map = (
+    <svg ref={svgRef} viewBox={`0 0 ${MW} ${MH}`} preserveAspectRatio="xMidYMid meet"
+      style={{ width: "100%", height: "100%", display: "block", touchAction: "none", cursor: "grab", background: "#0c2033" }}
+      onPointerDown={(e) => { drag.current = { x: e.clientX, y: e.clientY, vx: view.x, vy: view.y, moved: false }; }}
+      onPointerMove={(e) => {
+        if (!drag.current) return;
+        const r = svgRef.current.getBoundingClientRect();
+        const dx = ((e.clientX - drag.current.x) / r.width) * MW;
+        const dy = ((e.clientY - drag.current.y) / r.height) * MH;
+        if (Math.abs(dx) + Math.abs(dy) > 2) drag.current.moved = true;
+        if (drag.current.moved) {
+          const nx = drag.current.vx + dx, ny = drag.current.vy + dy;
+          setView((v) => ({ ...v, x: nx, y: ny }));
+        }
+      }}
+      onPointerUp={() => { setTimeout(() => { drag.current = null; }, 0); }}
+      onPointerLeave={() => { drag.current = null; }}>
+      <g transform={`translate(${view.x},${view.y}) scale(${view.k})`}>
+        {geoPaths && geoPaths.paths ? (
+          <g style={{ pointerEvents: "none" }}>
+            <defs>
+              <clipPath id="landClip">
+                {geoPaths.paths.map((f) => <path key={f.iso} d={f.d} />)}
+              </clipPath>
+            </defs>
+            {geoPaths.paths.map((f) => (
+              <path key={f.iso} d={f.d} fill="#26384c" stroke="none" />
+            ))}
+            {geoPaths.cells && (
+              <g clipPath="url(#landClip)">
+                {Object.keys(g.provs).map((id) => {
+                  const cd = geoPaths.cells[id];
+                  if (!cd) return null;
+                  const o = g.provs[id].owner;
+                  return (
+                    <path key={id} d={cd}
+                      fill={o === "neutral" ? "#3d4855" : g.nations[o].color}
+                      fillOpacity={o === "neutral" ? 0.5 : 0.78}
+                      stroke="#0a1626" strokeWidth={0.45 / view.k} />
+                  );
+                })}
+              </g>
+            )}
+            {geoPaths.paths.map((f) => (
+              <path key={"o" + f.iso} d={f.d} fill="none" stroke="rgba(7,14,26,.85)" strokeWidth={0.7 / view.k} />
+            ))}
+          </g>
+        ) : null}
+        {geoPaths === "failed" && (
+          <text x={MW / 2} y={20} textAnchor="middle" fontSize="9" fill="#7e93a8">Country shapes unavailable (CDN blocked) — playing on city network view</text>
+        )}
+        {sel && XY[sel] && ADJ[sel].map((j) => (
+          <line key={j} x1={XY[sel][0]} y1={XY[sel][1]} x2={XY[j][0]} y2={XY[j][1]}
+            stroke="rgba(220,235,250,.45)" strokeWidth={1 / view.k} strokeDasharray={`${3 / view.k},${2 / view.k}`} style={{ pointerEvents: "none" }} />
+        ))}
+        {Object.keys(g.provs).map((id) => {
+          const p = g.provs[id], xy = XY[id];
+          const isCap = p.owner !== "neutral" && g.nations[p.owner].cap === id;
+          const isSel = sel === id, isTgt = vt.has(id), enemyT = isTgt && p.owner !== g.player;
+          const iz = 1 / view.k;
+          const rr = (isCap ? 5.5 : p.owner === "neutral" ? 4 : 4.8) * iz;
+          const fs = 10 * iz;
+          return (
+            <g key={id} onClick={() => clickCity(id)} style={{ cursor: "pointer" }}>
+              <circle cx={xy[0]} cy={xy[1]} r={rr} fill={p.owner === "neutral" ? "#8b97a3" : g.nations[p.owner].color}
+                stroke={isSel ? "#ffffff" : isTgt ? (enemyT ? "#ff7b6b" : "#7fffd4") : "#0a1626"}
+                strokeWidth={(isSel ? 2 : isTgt ? 1.8 : 1) * iz}
+                strokeDasharray={isTgt && !isSel ? `${3 * iz},${2 * iz}` : "none"} />
+              {isCap && <text x={xy[0]} y={xy[1] - rr - 2 * iz} textAnchor="middle" fontSize={fs} fill="#ffe27a" style={{ pointerEvents: "none" }}>★</text>}
+              {showNames && (
+                <text x={xy[0]} y={xy[1] - rr - (isCap ? 12 * iz : 3 * iz)} textAnchor="middle" fontSize={fs * 0.95} fontWeight="600" fill="#f2f6fa"
+                  style={{ pointerEvents: "none", paintOrder: "stroke", stroke: "#0a1626", strokeWidth: 2.5 * iz }}>{CDEF[id].name}</text>
+              )}
+              <text x={xy[0]} y={xy[1] + rr + 9.5 * iz} textAnchor="middle" fontSize={fs * 0.9} fontWeight="700"
+                fill={p.fort ? "#ffd98a" : "#dfeaf4"} style={{ pointerEvents: "none", paintOrder: "stroke", stroke: "#0a1626", strokeWidth: 2.2 * iz }}>
+                {p.troops}{p.fort ? "🛡" : ""}
+              </text>
+            </g>
+          );
+        })}
+        {leaderXY && (
+          <g style={{ pointerEvents: "none" }}>
+            <circle cx={leaderXY[0]} cy={leaderXY[1]} r={9 / view.k} fill="none" stroke="#ffe27a" strokeWidth={1.6 / view.k} strokeDasharray={`${2.5 / view.k},${2 / view.k}`} />
+            <text x={leaderXY[0] + 10 / view.k} y={leaderXY[1] - 8 / view.k} fontSize={11 / view.k} style={{ paintOrder: "stroke", stroke: "#0a1626", strokeWidth: 2.5 / view.k }}>👤</text>
+          </g>
+        )}
+      </g>
+    </svg>
+  );
+
+  let provCard = null;
+  if (selP) {
+    const own = selP.owner === g.player;
+    const isCap = selP.owner !== "neutral" && g.nations[selP.owner].cap === sel;
+    const ownerName = selP.owner === "neutral" ? "Independent" : g.nations[selP.owner].name;
+    const fortC = 20 + selP.fort * 15, colC = 45 + Math.round(selP.pop * 8), factC = 25 + selP.dev * 12;
+    const adjMe = ADJ[sel].some((j) => g.provs[j].owner === g.player);
+    const enemy = selP.owner !== "neutral" && !own;
+    const hereLeader = g.leaderAt === sel;
+    const warZone = selP.owner !== "neutral" && selP.owner !== g.player && atWar(g, g.player, selP.owner);
+    const travelOk = isLeader ? !warZone : own; // demoted: only domestic travel
+    const tc = travelCost(g, sel);
+    const [tl, tcol] = threatLabel(threatAt(g, sel));
+    const built = [selP.uni ? "🎓" : null, selP.bar ? "🪖" : null, selP.air ? "✈️" : null].filter(Boolean).join(" ");
+    provCard = (
+      <div style={{ background: "#152537", border: "1px solid #27405a", borderRadius: 10, padding: 12, marginBottom: 10 }}>
+        <div style={{ display: "flex", justifyContent: "space-between", alignItems: "baseline" }}>
+          <b style={{ fontSize: 15 }}>{isCap ? "★ " : ""}{CDEF[sel].name} {built}</b>
+          <span style={{ fontSize: 11.5, color: "#93a9be", display: "flex", alignItems: "center", gap: 5 }}>
+            <span style={{ width: 9, height: 9, borderRadius: 3, background: selP.owner === "neutral" ? "#8b97a3" : g.nations[selP.owner].color, display: "inline-block" }} />{ownerName}
+          </span>
+        </div>
+        <div style={{ fontSize: 12, color: "#aebfd2", marginTop: 6, display: "flex", gap: 12, flexWrap: "wrap" }}>
+          <span>👥 {selP.pop.toFixed(1)}M</span><span>🏗️ Dev {selP.dev}/10</span><span>🛡️ Fort {selP.fort}/5</span><span>⚔️ {selP.troops}</span>
+        </div>
+        <div style={{ fontSize: 11.5, marginTop: 7 }}>
+          {hereLeader ? (
+            <span style={{ color: "#ffe27a" }}>👤 You are here{g.wounded > 0 ? ` — recovering (${g.wounded} turn${g.wounded > 1 ? "s" : ""})` : ""}</span>
+          ) : !travelOk ? (
+            <span style={{ color: "#ff8a76" }}>👤 {isLeader ? "Travel impossible — enemy territory in an active war." : "As a " + g.role + " you may only travel within the country."}</span>
+          ) : (
+            <span style={{ color: "#aebfd2" }}>
+              <button style={{ ...BTN2, marginRight: 7 }} disabled={g.traveled || g.wounded > 0 || P.treasury < tc}
+                onClick={() => mut((d) => {
+                  const cost = travelCost(d, sel);
+                  if (d.role === "leader") d.nations[d.player].treasury -= cost;
+                  d.leaderAt = sel; d.traveled = true;
+                  const o = d.provs[sel].owner;
+                  if (o === d.player && sel !== d.nations[d.player].cap) {
+                    if (d.role === "leader") d.nations[d.player].approval = Math.min(100, d.nations[d.player].approval + 1);
+                    else d.popularity = Math.min(100, d.popularity + 1);
+                  }
+                  glog(d, `🛫 You travel to ${CDEF[sel].name}.`);
+                })}>
+                🛫 Travel here{isLeader ? ` ($${tc})` : ""}
+              </button>
+              {isLeader ? <>Threat: <b style={{ color: tcol }}>{tl}</b></> : <span style={{ color: "#93a9be" }}>campaign touring builds popularity</span>}
+              {g.traveled ? <span style={{ color: "#62788d" }}> · already traveled</span> : null}
+            </span>
+          )}
+        </div>
+        {own && isLeader && (
+          <div style={{ display: "flex", flexWrap: "wrap", gap: 6, marginTop: 10 }}>
+            <button style={BTN} disabled={P.treasury < 20 || selP.troops >= 250} title={selP.bar ? "Barracks: +15 per recruit" : ""} onClick={() => mut((d) => { const p = d.provs[sel]; if (d.nations[d.player].treasury >= 20 && p.troops < 250) { d.nations[d.player].treasury -= 20; p.troops = Math.min(250, p.troops + (p.bar ? 15 : 10)); } })}>Recruit +{selP.bar ? 15 : 10} ($20)</button>
+            <button style={BTN} disabled={P.treasury < factC || selP.dev >= 10} title="Raises development: more income" onClick={() => mut((d) => { const p = d.provs[sel]; if (d.nations[d.player].treasury >= factC && p.dev < 10) { d.nations[d.player].treasury -= factC; p.dev++; glog(d, `🏭 New factories in ${CDEF[sel].name} (+1 development).`); } })}>🏭 Factory (${factC})</button>
+            <button style={BTN} disabled={P.treasury < 60 || selP.uni > 0 || selP.dev >= 10} title="+1 dev and faster population growth" onClick={() => mut((d) => { const p = d.provs[sel]; if (d.nations[d.player].treasury >= 60 && !p.uni) { d.nations[d.player].treasury -= 60; p.uni = 1; p.dev = Math.min(10, p.dev + 1); glog(d, `🎓 ${CDEF[sel].name} opens a university — talent flows in.`); } })}>🎓 University ($60)</button>
+            <button style={BTN} disabled={P.treasury < 40 || selP.bar > 0} title="Recruiting here gives +15 troops instead of +10" onClick={() => mut((d) => { const p = d.provs[sel]; if (d.nations[d.player].treasury >= 40 && !p.bar) { d.nations[d.player].treasury -= 40; p.bar = 1; glog(d, `🪖 Barracks built in ${CDEF[sel].name}.`); } })}>🪖 Barracks ($40)</button>
+            <button style={BTN} disabled={P.treasury < 50 || selP.air > 0} title="Travel from this city costs 40% less" onClick={() => mut((d) => { const p = d.provs[sel]; if (d.nations[d.player].treasury >= 50 && !p.air) { d.nations[d.player].treasury -= 50; p.air = 1; glog(d, `✈️ International airport opens in ${CDEF[sel].name}.`); } })}>✈️ Airport ($50)</button>
+            <button style={BTN} disabled={P.treasury < fortC || selP.fort >= 5} onClick={() => mut((d) => { const p = d.provs[sel]; if (d.nations[d.player].treasury >= fortC && p.fort < 5) { d.nations[d.player].treasury -= fortC; p.fort++; } })}>🛡️ Fortify (${fortC})</button>
+            <button style={mode ? BTNG : BTN} disabled={selP.acted || selP.troops < 1} onClick={() => setMode((m) => (m ? null : "target"))}>{selP.acted ? "Already acted" : mode ? "Cancel targeting" : "Move / Attack ➜"}</button>
+            {!isCap && <button style={BTN2} disabled={P.treasury < 50} onClick={() => mut((d) => { d.nations[d.player].treasury -= 50; d.nations[d.player].cap = sel; glog(d, `The capital is moved to ${CDEF[sel].name}.`); })}>Make capital ($50)</button>}
+          </div>
+        )}
+        {own && !isLeader && <div style={{ fontSize: 11.5, color: "#93a9be", marginTop: 10 }}>The government of {g.rival || "the new leader"} commands the nation now. Your job is to rebuild your career.</div>}
+        {mode && own && isLeader && <div style={{ fontSize: 11.5, color: "#7fffd4", marginTop: 8 }}>Dotted lines show reachable cities. Green = move/reinforce ally, red = attack.</div>}
+        {selP.owner === "neutral" && isLeader && (adjMe ? (
+          <div style={{ marginTop: 10 }}>
+            <button style={BTNG} disabled={P.treasury < colC} onClick={() => mut((d) => { const p = d.provs[sel]; const c = 45 + Math.round(p.pop * 8); if (d.nations[d.player].treasury >= c) { d.nations[d.player].treasury -= c; p.owner = d.player; p.troops = 8; glog(d, `🏙️ ${CDEF[sel].name} joins your nation peacefully.`, "major"); d.news = `${CDEF[sel].name} has joined your nation.`; } })}>🏙️ Found city — colonize (${colC})</button>
+          </div>
+        ) : <div style={{ fontSize: 11.5, color: "#93a9be", marginTop: 10 }}>Independent city. Expand next to it to colonize peacefully, or conquer it by force.</div>)}
+        {enemy && (
+          <div style={{ marginTop: 10, fontSize: 12, color: "#aebfd2" }}>
+            Relations: <b style={{ color: g.rel[pk(g.player, selP.owner)] >= 0 ? "#7fd49a" : "#e08a7a" }}>{Math.round(g.rel[pk(g.player, selP.owner)])}</b>
+            {atWar(g, g.player, selP.owner) ? <span style={{ color: "#ff8a76" }}> · ⚔️ AT WAR</span> : isAllied(g, g.player, selP.owner) ? <span style={{ color: "#7fd49a" }}> · 🤝 Ally</span> : isLeader ? (
+              <button style={{ ...BTNW, marginLeft: 8 }} onClick={() => mut((d) => { const o = d.provs[sel].owner; const justified = d.rel[pk(d.player, o)] < -40; joinWar(d, d.player, o); d.nations[d.player].approval = Math.max(0, d.nations[d.player].approval - (justified ? 3 : 8)); glog(d, `🔥 You declare war on ${d.nations[o].name}!`, "major"); d.news = `War with ${d.nations[o].name}!`; })}>Declare war</button>
+            ) : null}
+          </div>
+        )}
+      </div>
+    );
+  }
+
+  const careerCard = (
+    <div style={{ background: isLeader ? "transparent" : "#1d3046", border: isLeader ? "none" : "1px solid #3a5878", borderRadius: 8, padding: isLeader ? 0 : 10, marginBottom: 10 }}>
+      <div style={{ fontSize: 12, color: "#ffe27a", marginBottom: isLeader ? 10 : 6 }}>
+        {ROLE_LABEL[g.role]} · 👤 {CDEF[g.leaderAt].name}
+        {g.wounded > 0 ? <span style={{ color: "#ff8a76" }}> · recovering {g.wounded}</span> : null}
+        {g.securityBoost > 0 ? <span style={{ color: "#7fd49a" }}> · security boosted</span> : null}
+      </div>
+      {!isLeader && (
+        <div style={{ fontSize: 12 }}>
+          <div style={{ color: "#aebfd2", marginBottom: 6 }}>The nation is run by <b>{g.rival || "the new government"}</b>. Rebuild your {g.role === "minister" ? "popularity" : "reputation"} to rise again.</div>
+          <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 6 }}>
+            <span style={{ width: 90 }}>{g.role === "minister" ? "Popularity" : "Reputation"}</span>
+            <Bar v={g.popularity} color={g.popularity >= 50 ? "#5fbf7f" : "#d4685a"} /><b>{Math.round(g.popularity)}%</b>
+          </div>
+          <div style={{ color: "#93a9be" }}>
+            Turns in role: <b style={{ color: "#e7eef6" }}>{g.roleTurns}</b> · Next review in <b style={{ color: "#e7eef6" }}>{10 - (g.roleTurns % 10)}</b> turn(s)
+          </div>
+          {g.role === "minister" && (
+            <div style={{ marginTop: 8 }}>
+              {g.roleTurns >= 20 && g.popularity >= 70 ? (
+                <button style={{ ...BTNG, padding: "8px 12px" }} onClick={startDuel}>🎙️ Challenge {g.rival || "the leader"} — live showdown!</button>
+              ) : (
+                <span style={{ color: "#62788d", fontSize: 11.5 }}>Comeback path: reach <b>70% popularity</b> after <b>20 turns</b> as minister, then defeat the leader in a live interview. ({g.roleTurns}/20 turns, {Math.round(g.popularity)}/70%)</span>
+              )}
+            </div>
+          )}
+          {g.role === "clerk" && <div style={{ color: "#62788d", fontSize: 11.5, marginTop: 6 }}>Reach 70% reputation by a review to be promoted back to minister. Fall below 15% and you are finished.</div>}
+        </div>
+      )}
+    </div>
+  );
+
+  const empireTab = (
+    <div>
+      {careerCard}
+      <div style={{ fontSize: 13, lineHeight: 1.9, opacity: isLeader ? 1 : 0.6 }}>
+        <div style={{ display: "flex", justifyContent: "space-between" }}><span>📈 Tax income</span><b style={{ color: "#7fd49a" }}>+{fmt$(inc)}</b></div>
+        <div style={{ display: "flex", justifyContent: "space-between" }}><span>⚔️ Military upkeep ({armyOf(g, g.player)} troops)</span><b style={{ color: "#e08a7a" }}>−{fmt$(up)}</b></div>
+        <div style={{ display: "flex", justifyContent: "space-between" }}><span>🏥 Public services</span><b style={{ color: "#e08a7a" }}>−{fmt$(sc)}</b></div>
+        <div style={{ display: "flex", justifyContent: "space-between" }}><span>🕵️ Intelligence agency</span><b style={{ color: "#e08a7a" }}>−{fmt$(ic)}</b></div>
+        <div style={{ display: "flex", justifyContent: "space-between", borderTop: "1px solid #27405a", marginTop: 4, paddingTop: 4 }}><span>Net per turn</span><b style={{ color: net >= 0 ? "#7fd49a" : "#ff8a76" }}>{net >= 0 ? "+" : ""}{fmt$(net)}</b></div>
+      </div>
+      <div style={{ marginTop: 14, opacity: isLeader ? 1 : 0.5 }}>
+        <div style={{ fontSize: 12, color: "#93a9be", marginBottom: 4 }}>Tax rate: <b style={{ color: "#e7eef6" }}>{P.tax}%</b></div>
+        <input type="range" min="0" max="50" value={P.tax} disabled={!isLeader} onChange={(e) => { const v = +e.target.value; mut((d) => { d.nations[d.player].tax = v; }); }} style={{ width: "100%" }} />
+        <div style={{ fontSize: 12, color: "#93a9be", margin: "8px 0 4px" }}>Public services: <b style={{ color: "#e7eef6" }}>level {P.services}</b></div>
+        <input type="range" min="0" max="4" value={P.services} disabled={!isLeader} onChange={(e) => { const v = +e.target.value; mut((d) => { d.nations[d.player].services = v; }); }} style={{ width: "100%" }} />
+        <div style={{ fontSize: 12, color: "#93a9be", margin: "8px 0 4px" }}>Intelligence agency: <b style={{ color: "#e7eef6" }}>level {P.intel}</b> <span style={{ color: "#62788d" }}>($6/turn per level)</span></div>
+        <input type="range" min="0" max="4" value={P.intel} disabled={!isLeader} onChange={(e) => { const v = +e.target.value; mut((d) => { d.nations[d.player].intel = v; }); }} style={{ width: "100%" }} />
+        {!isLeader && <div style={{ fontSize: 11, color: "#62788d" }}>The government sets policy now — not you.</div>}
+      </div>
+      <div style={{ marginTop: 14, fontSize: 12.5 }}>
+        <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 6 }}>
+          <span style={{ width: 90 }}>Gov approval</span><Bar v={P.approval} color={P.approval >= 45 ? "#5fbf7f" : "#d4685a"} /><b>{Math.round(P.approval)}%</b>
+        </div>
+        <div style={{ color: "#93a9be" }}>
+          Government: <b style={{ color: "#e7eef6" }}>{P.gov}</b>
+          {isLeader && P.gov === "democracy" ? <> · 🗳️ Election in <b style={{ color: "#e7eef6" }}>{(ELECTION_CYCLE - (g.turn % ELECTION_CYCLE)) % ELECTION_CYCLE || ELECTION_CYCLE}</b> turn(s) — need ≥45%</> : null}
+          {isLeader && P.gov === "autocracy" ? <> · no elections, but low approval risks rebellion</> : null}
+        </div>
+        <div style={{ color: "#93a9be", marginTop: 4 }}>Cities: <b style={{ color: "#e7eef6" }}>{nationProvs(g, g.player).length}</b> · Army: <b style={{ color: "#e7eef6" }}>{armyOf(g, g.player)}</b> · Wars: <b style={{ color: warsOf(g, g.player).length ? "#ff8a76" : "#e7eef6" }}>{warsOf(g, g.player).length}</b></div>
+        <div style={{ color: "#62788d", marginTop: 8, fontSize: 11.5 }}>🏆 Control 25 cities as leader to become the world superpower.</div>
+      </div>
+    </div>
+  );
+
+  const worldTab = (
+    <div>
+      {!isLeader && <div style={{ fontSize: 11.5, color: "#93a9be", marginBottom: 10 }}>Diplomacy is handled by {g.rival || "the government"} now. You can only watch.</div>}
+      {g.offers.length > 0 && isLeader && (
+        <div style={{ background: "#1d3046", border: "1px solid #3a5878", borderRadius: 8, padding: 10, marginBottom: 10 }}>
+          <b style={{ fontSize: 12.5 }}>📨 Diplomatic offers</b>
+          {g.offers.map((o) => (
+            <div key={o.id} style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginTop: 8, fontSize: 12, gap: 6 }}>
+              <span>{g.nations[o.from].name} proposes {o.type === "peace" ? "peace" : "an alliance"}</span>
+              <span style={{ display: "flex", gap: 5 }}>
+                <button style={BTNG} onClick={() => mut((d) => { const off = d.offers.find((x) => x.id === o.id); if (!off) return; d.offers = d.offers.filter((x) => x.id !== o.id); if (off.type === "peace") { endWarBetween(d, d.player, off.from); glog(d, `🕊️ Peace with ${d.nations[off.from].name}.`, "major"); } else { d.allies[pk(d.player, off.from)] = true; d.rel[pk(d.player, off.from)] = Math.min(100, d.rel[pk(d.player, off.from)] + 20); glog(d, `🤝 Alliance formed with ${d.nations[off.from].name}!`, "major"); } })}>Accept</button>
+                <button style={BTN2} onClick={() => mut((d) => { d.offers = d.offers.filter((x) => x.id !== o.id); d.rel[pk(d.player, o.from)] -= 5; })}>Decline</button>
+              </span>
+            </div>
+          ))}
+        </div>
+      )}
+      {Object.values(g.nations).filter((n) => n.id !== g.player && !n.eliminated).sort((a, b) => g.rel[pk(g.player, b.id)] - g.rel[pk(g.player, a.id)]).map((n) => {
+        const r = g.rel[pk(g.player, n.id)], war = atWar(g, g.player, n.id), ally = isAllied(g, g.player, n.id);
+        return (
+          <div key={n.id} style={{ borderBottom: "1px solid #1d3046", padding: "8px 0", fontSize: 12 }}>
+            <div style={{ display: "flex", alignItems: "center", gap: 7 }}>
+              <span style={{ width: 10, height: 10, borderRadius: 3, background: n.color, display: "inline-block" }} />
+              <b style={{ flex: 1 }}>{n.name}</b>
+              {war && <span style={{ color: "#ff8a76", fontWeight: 700 }}>⚔️ WAR</span>}
+              {ally && <span style={{ color: "#7fd49a", fontWeight: 700 }}>🤝 ALLY</span>}
+            </div>
+            <div style={{ display: "flex", alignItems: "center", gap: 8, marginTop: 5, color: "#93a9be" }}>
+              <span style={{ width: 110 }}>{nationProvs(g, n.id).length} cities · {armyOf(g, n.id)}⚔</span>
+              <Bar v={(r + 100) / 2} color={r >= 0 ? "#5fbf7f" : "#d4685a"} /><b style={{ width: 30, textAlign: "right", color: r >= 0 ? "#7fd49a" : "#e08a7a" }}>{Math.round(r)}</b>
+            </div>
+            {isLeader && (
+              <div style={{ display: "flex", gap: 5, marginTop: 6, flexWrap: "wrap" }}>
+                <button style={BTN2} disabled={P.treasury < 15 || war} onClick={() => mut((d) => { d.nations[d.player].treasury -= 15; d.rel[pk(d.player, n.id)] = Math.min(100, d.rel[pk(d.player, n.id)] + 12); })}>Improve ($15)</button>
+                {!war && !ally && <button style={BTN2} disabled={r < 60} title={r < 60 ? "Needs relations ≥ 60" : ""} onClick={() => mut((d) => { const k = pk(d.player, n.id); if (rnd() < (d.rel[k] - 40) / 60) { d.allies[k] = true; glog(d, `🤝 ${n.name} accepts your alliance!`, "major"); } else { d.rel[k] -= 5; glog(d, `${n.name} declines your alliance proposal.`); } })}>Propose alliance</button>}
+                {ally && <button style={BTN2} onClick={() => mut((d) => { delete d.allies[pk(d.player, n.id)]; d.rel[pk(d.player, n.id)] -= 30; glog(d, `You break your alliance with ${n.name}.`); })}>Break alliance</button>}
+                {!war && !ally && <button style={BTNW} onClick={() => mut((d) => { const justified = d.rel[pk(d.player, n.id)] < -40; joinWar(d, d.player, n.id); d.nations[d.player].approval = Math.max(0, d.nations[d.player].approval - (justified ? 3 : 8)); glog(d, `🔥 You declare war on ${n.name}!`, "major"); d.news = `War with ${n.name}!`; })}>Declare war</button>}
+                {war && <button style={BTNG} onClick={() => mut((d) => { const accept = armyOf(d, n.id) < armyOf(d, d.player) * 0.8 || ((d.wars[pk(d.player, n.id)] || 0) > 5 && rnd() < 0.5); if (accept) { endWarBetween(d, d.player, n.id); glog(d, `🕊️ ${n.name} accepts peace.`, "major"); } else glog(d, `${n.name} rejects your peace offer.`, "war"); })}>Offer peace</button>}
+              </div>
+            )}
+          </div>
+        );
+      })}
+    </div>
+  );
+
+  const logTab = (
+    <div style={{ fontSize: 12, lineHeight: 1.5 }}>
+      {g.log.map((e, i) => (
+        <div key={i} style={{ padding: "6px 0", borderBottom: "1px solid #18293c", color: e.k === "major" ? "#ffd98a" : e.k === "war" ? "#e0937f" : e.k === "intel" ? "#7fd0e8" : "#aebfd2" }}>
+          <span style={{ color: "#5a7088", marginRight: 6 }}>T{e.t}</span>{e.msg}
+        </div>
+      ))}
+    </div>
+  );
+
+  const evC = g.event ? eventContent(g, g.event) : null;
+  const duelQ = g.duel ? DEBATES[g.duel.qs[g.duel.i]] : null;
+
+  return (
+    <div style={{ height: "100vh", display: "flex", flexDirection: "column", background: "#0a1626", color: "#e7eef6", fontFamily: "system-ui,sans-serif", overflow: "hidden" }}>
+      <div style={{ display: "flex", alignItems: "center", gap: 12, padding: "8px 12px", background: "#0e1f33", borderBottom: "1px solid #1d3450", flexWrap: "wrap" }}>
+        <b style={{ display: "flex", alignItems: "center", gap: 7, fontSize: 14 }}><span style={{ width: 12, height: 12, borderRadius: 4, background: P.color, display: "inline-block" }} />{P.name}</b>
+        <span style={{ fontSize: 12, color: "#ffe27a" }}>{ROLE_LABEL[g.role]}</span>
+        <span style={{ fontSize: 13 }}>💰 <b>{fmt$(P.treasury)}</b></span>
+        {isLeader ? (
+          <span style={{ fontSize: 13 }}>😊 <b style={{ color: P.approval >= 45 ? "#7fd49a" : "#ff8a76" }}>{Math.round(P.approval)}%</b></span>
+        ) : (
+          <span style={{ fontSize: 13 }}>⭐ <b style={{ color: g.popularity >= 50 ? "#7fd49a" : "#ff8a76" }}>{Math.round(g.popularity)}%</b></span>
+        )}
+        <span style={{ fontSize: 13, color: "#93a9be" }}>Turn <b style={{ color: "#e7eef6" }}>{g.turn}</b></span>
+        <span style={{ flex: 1, fontSize: 11.5, color: "#8fb0cc", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap", minWidth: 60 }}>📰 {g.news}</span>
+        <button style={BTN2} onClick={save}>💾 Save file</button>
+        <button style={BTN2} onClick={load}>📂 Load file</button>
+        <input ref={fileRef} type="file" accept=".json,application/json" style={{ display: "none" }} onChange={onLoadFile} />
+        <button style={{ ...BTNG, padding: "7px 16px", fontSize: 13 }} onClick={endTurn}>End Turn ⏭</button>
+      </div>
+      <div style={{ flex: 1, display: "flex", flexDirection: narrow ? "column" : "row", minHeight: 0 }}>
+        <div style={{ flex: 1, position: "relative", minHeight: narrow ? "44%" : "auto" }}>
+          {map}
+          {!geoPaths && <div style={{ position: "absolute", top: 8, left: 10, fontSize: 11, color: "#7e93a8" }}>Loading world map…</div>}
+          <div style={{ position: "absolute", right: 10, bottom: 10, display: "flex", flexDirection: "column", gap: 6 }}>
+            <button style={{ ...BTN, width: 34, height: 34, fontSize: 16, padding: 0 }} onClick={() => setView((v) => ({ ...v, k: Math.min(40, v.k * 1.25) }))}>+</button>
+            <button style={{ ...BTN, width: 34, height: 34, fontSize: 16, padding: 0 }} onClick={() => setView((v) => ({ ...v, k: Math.max(0.9, v.k * 0.8) }))}>−</button>
+          </div>
+        </div>
+        <div style={{ width: narrow ? "100%" : 345, maxHeight: narrow ? "56%" : "none", background: "#101e30", borderLeft: narrow ? "none" : "1px solid #1d3450", borderTop: narrow ? "1px solid #1d3450" : "none", padding: 12, overflowY: "auto", boxSizing: "border-box" }}>
+          {provCard || <div style={{ background: "#152537", border: "1px solid #27405a", borderRadius: 10, padding: 12, marginBottom: 10, fontSize: 12, color: "#62788d" }}>Click a city dot to inspect, manage — or travel there in person. Drag to pan, scroll to zoom.</div>}
+          <div style={{ display: "flex", gap: 4, marginBottom: 10 }}>
+            {[["empire", "🏛️ Empire"], ["world", `🌐 World${g.offers.length && isLeader ? ` (${g.offers.length})` : ""}`], ["log", "📜 Log"]].map(([id, lbl]) => (
+              <button key={id} onClick={() => setTab(id)} style={{ ...BTN2, flex: 1, background: tab === id ? "#2c4a6e" : "#16283c" }}>{lbl}</button>
+            ))}
+          </div>
+          {tab === "empire" && empireTab}
+          {tab === "world" && worldTab}
+          {tab === "log" && logTab}
+        </div>
+      </div>
+
+      {g.duel && duelQ && (
+        <div style={{ position: "fixed", inset: 0, background: "rgba(5,10,18,.85)", display: "flex", alignItems: "center", justifyContent: "center", zIndex: 58 }}>
+          <div style={{ background: "#1a2438", border: "1px solid #b8973a", borderRadius: 14, padding: 22, width: 440, maxWidth: "92%" }}>
+            <h3 style={{ margin: "0 0 4px" }}>🎙️ LIVE: You vs. {g.rival || "the Leader"}</h3>
+            <div style={{ fontSize: 12, color: "#ffd98a", marginBottom: 10 }}>Question {g.duel.i + 1} of {g.duel.qs.length} · Score: You {g.duel.ps} — {g.duel.ls} {g.rival || "Leader"}</div>
+            <p style={{ fontSize: 13.5, color: "#c5d4e3", lineHeight: 1.55 }}>The moderator turns to you: "{duelQ.q}"</p>
+            <div style={{ display: "grid", gap: 8 }}>
+              <button style={{ ...BTN, padding: 10, textAlign: "left" }} onClick={() => duelAnswer(0)}>{duelQ.a[0]}</button>
+              <button style={{ ...BTN, padding: 10, textAlign: "left" }} onClick={() => duelAnswer(1)}>{duelQ.a[1]}</button>
+            </div>
+            <div style={{ fontSize: 11, color: "#62788d", marginTop: 8 }}>The studio audience decides who lands each round. Win the majority to take back the country.</div>
+          </div>
+        </div>
+      )}
+
+      {evC && !g.duel && (
+        <div style={{ position: "fixed", inset: 0, background: "rgba(5,10,18,.78)", display: "flex", alignItems: "center", justifyContent: "center", zIndex: 55 }}>
+          <div style={{ background: "#1a2438", border: "1px solid #3a5878", borderRadius: 14, padding: 22, width: 420, maxWidth: "92%" }}>
+            <h3 style={{ margin: "0 0 8px" }}>{evC.title}</h3>
+            <p style={{ fontSize: 13, color: "#c5d4e3", lineHeight: 1.55 }}>{evC.text}</p>
+            <div style={{ display: "grid", gap: 8, marginTop: 8 }}>
+              {evC.choices.map((c) => (
+                <button key={c.a} style={{ ...BTN, padding: 10, textAlign: "left" }} onClick={() => mut((d) => resolveEvent(d, c.a))}>{c.label}</button>
+              ))}
+            </div>
+          </div>
+        </div>
+      )}
+
+      {moveDlg && (() => {
+        const max = g.provs[moveDlg.from].troops;
+        const amt = Math.max(1, Math.min(max, moveAmt));
+        return (
+          <div style={{ position: "fixed", inset: 0, background: "rgba(5,10,18,.6)", display: "flex", alignItems: "center", justifyContent: "center", zIndex: 50 }} onClick={() => setMoveDlg(null)}>
+            <div style={{ background: "#152537", border: "1px solid #2c4a6e", borderRadius: 12, padding: 20, width: 320 }} onClick={(e) => e.stopPropagation()}>
+              <b>{moveDlg.ally ? `Reinforce ${g.nations[moveDlg.ally].name}` : "Move troops"}</b>
+              <p style={{ fontSize: 12.5, color: "#aebfd2" }}>{CDEF[moveDlg.from].name} ({max}⚔) → {CDEF[moveDlg.to].name}{moveDlg.ally ? " — the troops will join your ally's garrison and boost relations" : ""}</p>
+              <div style={{ display: "flex", alignItems: "center", gap: 8, margin: "10px 0" }}>
+                <input type="range" min="1" max={max} value={amt} onChange={(e) => setMoveAmt(+e.target.value)} style={{ flex: 1 }} />
+                <input type="number" min="1" max={max} value={amt} onChange={(e) => setMoveAmt(Math.max(1, Math.min(max, +e.target.value || 1)))}
+                  style={{ width: 56, background: "#0e1f33", color: "#e7eef6", border: "1px solid #2c4a6e", borderRadius: 5, padding: "4px 6px", fontSize: 12 }} />
+              </div>
+              <div style={{ display: "flex", gap: 6, marginBottom: 10 }}>
+                <button style={{ ...BTN2, flex: 1 }} onClick={() => setMoveAmt(Math.max(1, Math.floor(max / 2)))}>Half</button>
+                <button style={{ ...BTN2, flex: 1 }} onClick={() => setMoveAmt(max)}>All</button>
+              </div>
+              <div style={{ display: "flex", gap: 8 }}>
+                <button style={{ ...BTN, flex: 1 }} onClick={() => doMove(amt)}>Send {amt}</button>
+                <button style={BTN2} onClick={() => setMoveDlg(null)}>Cancel</button>
+              </div>
+            </div>
+          </div>
+        );
+      })()}
+
+      {electionDlg && (
+        <div style={{ position: "fixed", inset: 0, background: "rgba(5,10,18,.78)", display: "flex", alignItems: "center", justifyContent: "center", zIndex: 60 }}>
+          <div style={{ background: "#1a2438", border: "1px solid #3a5878", borderRadius: 14, padding: 24, width: 400, maxWidth: "90%" }}>
+            <h3 style={{ margin: 0 }}>🗳️ Election Defeat</h3>
+            <p style={{ fontSize: 13, color: "#aebfd2" }}>With only {Math.round(P.approval)}% approval, the people have voted you out. The victor offers you a face-saving cabinet post... or you could refuse to leave at all.</p>
+            <div style={{ display: "grid", gap: 8 }}>
+              <button style={{ ...BTN, padding: 10 }} onClick={() => { mut((d) => { d.role = "minister"; d.popularity = 45; d.roleTurns = 0; d.rival = pickOne(RIVALS); d.event = null; d.duel = null; glog(d, `🗳️ You concede with dignity and accept a ministerial post under ${d.rival}. The long road back begins.`, "major"); d.news = `${d.rival} takes power. You serve as minister.`; }); setElectionDlg(false); }}>Accept defeat — serve as a minister, plot your comeback</button>
+              <button style={{ ...BTNW, padding: 10 }} onClick={() => { mut((d) => { const PP = d.nations[d.player]; PP.gov = "autocracy"; PP.approval = Math.max(0, PP.approval - 15); Object.keys(d.nations).forEach((o) => { if (o !== d.player && !d.nations[o].eliminated && d.nations[o].gov === "democracy") d.rel[pk(d.player, o)] = Math.max(-100, d.rel[pk(d.player, o)] - 40); }); glog(d, "⚠️ You refuse to step down and seize power! Democracies condemn the coup.", "major"); d.news = "You have seized power."; }); setElectionDlg(false); }}>Refuse to step down — seize power</button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {g.over && (
+        <div style={{ position: "fixed", inset: 0, background: "rgba(5,10,18,.85)", display: "flex", alignItems: "center", justifyContent: "center", zIndex: 70 }}>
+          <div style={{ background: "#1a2438", border: `1px solid ${g.over.type === "victory" ? "#b8973a" : "#7a3a3a"}`, borderRadius: 14, padding: 26, width: 400, maxWidth: "90%", textAlign: "center" }}>
+            <h2 style={{ margin: "0 0 8px", color: g.over.type === "victory" ? "#ffd98a" : "#ff8a76" }}>{g.over.title}</h2>
+            <p style={{ fontSize: 13.5, color: "#c5d4e3" }}>{g.over.msg}</p>
+            <div style={{ display: "flex", gap: 8, justifyContent: "center", marginTop: 14 }}>
+              {g.over.type === "victory" && <button style={BTNG} onClick={() => mut((d) => { d.over = null; })}>Keep ruling the world</button>}
+              <button style={BTN} onClick={() => { setPhase("pick"); setG(null); setSel(null); setMode(null); }}>New game</button>
+            </div>
+          </div>
+        </div>
+      )}
+    </div>
+  );
+}
+
+
+const root = ReactDOM.createRoot(document.getElementById("root"));
+root.render(<App />);
+</script>
+</body>
+</html>
